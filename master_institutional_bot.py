@@ -89,18 +89,35 @@ class MasterPortfolioBot:
             halfway = p.price_open + (dist_total * 0.5) if is_buy else p.price_open - (dist_total * 0.5)
             buffer = max(info.point * 10, dist_total * 0.02)
 
+            # Fase 1: Break-Even al 50% del TP
             if is_buy and cur_price >= halfway and p.sl < p.price_open:
                 new_sl = round(p.price_open + buffer, info.digits)
                 req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(new_sl), "tp": float(p.tp)}
                 res = mt5.order_send(req)
                 if res.retcode == mt5.TRADE_RETCODE_DONE:
-                    print(f"[🛡️ BREAK-EVEN] Posición #{p.ticket} ({p.symbol}) asegurada con ganancia protegida en {new_sl} (Magic: {p.magic}).")
+                    print(f"[🛡️ BREAK-EVEN] Posición #{p.ticket} ({p.symbol}) asegurada en {new_sl} (Magic: {p.magic}).")
             elif not is_buy and cur_price <= halfway and (p.sl > p.price_open or p.sl == 0):
                 new_sl = round(p.price_open - buffer, info.digits)
                 req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(new_sl), "tp": float(p.tp)}
                 res = mt5.order_send(req)
                 if res.retcode == mt5.TRADE_RETCODE_DONE:
-                    print(f"[🛡️ BREAK-EVEN] Posición #{p.ticket} ({p.symbol}) asegurada con ganancia protegida en {new_sl} (Magic: {p.magic}).")
+                    print(f"[🛡️ BREAK-EVEN] Posición #{p.ticket} ({p.symbol}) asegurada en {new_sl} (Magic: {p.magic}).")
+
+            # Fase 2: Trailing Lock al 75% del TP -> Asegurar 50% de ganancia neta
+            three_quarters = p.price_open + (dist_total * 0.75) if is_buy else p.price_open - (dist_total * 0.75)
+            locked_half = p.price_open + (dist_total * 0.50) if is_buy else p.price_open - (dist_total * 0.50)
+            if is_buy and cur_price >= three_quarters and p.sl < locked_half:
+                new_sl = round(locked_half, info.digits)
+                req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(new_sl), "tp": float(p.tp)}
+                res = mt5.order_send(req)
+                if res.retcode == mt5.TRADE_RETCODE_DONE:
+                    print(f"[🏹 TRAILING LOCK] Posición #{p.ticket} ({p.symbol}) asegurando +50% de ganancia en {new_sl}!")
+            elif not is_buy and cur_price <= three_quarters and (p.sl > locked_half or p.sl == 0):
+                new_sl = round(locked_half, info.digits)
+                req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(new_sl), "tp": float(p.tp)}
+                res = mt5.order_send(req)
+                if res.retcode == mt5.TRADE_RETCODE_DONE:
+                    print(f"[🏹 TRAILING LOCK] Posición #{p.ticket} ({p.symbol}) asegurando +50% de ganancia en {new_sl}!")
 
     def run_cycle(self, execute=True):
         self.manage_portfolio_breakeven()

@@ -127,6 +127,20 @@ COT_CONFIG = {
     }
 }
 
+LOT_CAPS_COT_1000 = {
+    'USTEC': 0.20,
+    'US500': 0.50,
+    'US30': 0.10,
+    'US2000': 1.00,
+    'XAUUSD': 0.02,
+    'XTIUSD': 0.10,
+    'XNGUSD': 0.05,
+    'EURUSD': 0.05,
+    'GBPUSD': 0.05,
+    'USDJPY': 0.05,
+    'BTCUSD': 0.02
+}
+
 class MacroCOTSqueezeStrategy:
     def __init__(self, risk_pct=RISK_PERCENT):
         self.risk_pct = risk_pct
@@ -141,17 +155,25 @@ class MacroCOTSqueezeStrategy:
 
     def calculate_lots(self, symbol, sl_points):
         acc = mt5.account_info()
-        risk_cash = acc.balance * (self.risk_pct / 100.0)
+        balance = acc.balance if acc else 1000.0
+        scale = max(0.5, balance / 1000.0)
+        risk_cash = balance * (self.risk_pct / 100.0)
         info = mt5.symbol_info(symbol)
         if not info or sl_points <= 0:
-            return 0.1
+            return LOT_CAPS_COT_1000.get(symbol, 0.01)
+
         profit = mt5.order_calc_profit(mt5.ORDER_TYPE_BUY, symbol, info.volume_min, 1000.0, 1000.0 + sl_points)
         if profit and profit > 0:
             lots = (risk_cash / profit) * info.volume_min
         else:
             lots = risk_cash / (sl_points * info.trade_contract_size)
+
         step = info.volume_step
         lots = round(lots / step) * step
+
+        max_lot_allowed = LOT_CAPS_COT_1000.get(symbol, 0.05) * scale
+        lots = min(lots, max_lot_allowed)
+
         return round(max(info.volume_min, min(lots, info.volume_max)), 2)
 
     def is_cot_in_session(self, symbol):

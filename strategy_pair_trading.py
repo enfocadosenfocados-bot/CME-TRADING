@@ -35,7 +35,7 @@ MULTI_PAIRS = {
         'magic': 732100,
         'comment_prefix': 'SA_USTEC_US500',
         'lookback_bars': 40,
-        'z_entry': 2.0,
+        'z_entry': 2.2,
         'z_exit': 0.2,
         'z_stop': 3.5,
         'max_spread_a': 2.5,
@@ -48,7 +48,7 @@ MULTI_PAIRS = {
         'magic': 732200,
         'comment_prefix': 'SA_US30_US2000',
         'lookback_bars': 40,
-        'z_entry': 2.0,
+        'z_entry': 2.2,
         'z_exit': 0.2,
         'z_stop': 3.5,
         'max_spread_a': 3.0,
@@ -61,7 +61,7 @@ MULTI_PAIRS = {
         'magic': 732300,
         'comment_prefix': 'SA_EUR_GBP',
         'lookback_bars': 40,
-        'z_entry': 2.0,
+        'z_entry': 2.2,
         'z_exit': 0.2,
         'z_stop': 3.5,
         'max_spread_a': 0.00015,
@@ -74,12 +74,23 @@ MULTI_PAIRS = {
         'magic': 732400,
         'comment_prefix': 'SA_XAU_XTI',
         'lookback_bars': 40,
-        'z_entry': 2.0,
+        'z_entry': 2.2,
         'z_exit': 0.2,
         'z_stop': 3.5,
         'max_spread_a': 0.50,
         'max_spread_b': 0.05
     }
+}
+
+LOT_CAPS_PAIR_1000 = {
+    'USTEC': 0.10,
+    'US500': 0.30,
+    'US30': 0.10,
+    'US2000': 1.00,
+    'EURUSD': 0.02,
+    'GBPUSD': 0.02,
+    'XAUUSD': 0.01,
+    'XTIUSD': 0.04
 }
 
 class MultiPairStatArbStrategy:
@@ -107,7 +118,9 @@ class MultiPairStatArbStrategy:
 
     def calculate_dollar_neutral_lots(self, sym_a, sym_b):
         acc = mt5.account_info()
-        target_risk = acc.balance * (self.risk_pct / 100.0)
+        balance = acc.balance if acc else 1000.0
+        scale = max(0.5, balance / 1000.0)
+        target_risk = balance * (self.risk_pct / 100.0)
 
         info_a = mt5.symbol_info(sym_a)
         info_b = mt5.symbol_info(sym_b)
@@ -115,7 +128,7 @@ class MultiPairStatArbStrategy:
         tick_b = mt5.symbol_info_tick(sym_b)
 
         if not info_a or not info_b or not tick_a or not tick_b:
-            return 0.1, 0.1
+            return 0.01, 0.01
 
         price_a = tick_a.bid
         price_b = tick_b.bid
@@ -125,12 +138,14 @@ class MultiPairStatArbStrategy:
 
         lots_a = (target_risk / (price_a * 0.012 * info_a.trade_contract_size))
         lots_a = round(lots_a / info_a.volume_step) * info_a.volume_step
-        lots_a = max(info_a.volume_min, min(lots_a, info_a.volume_max))
+        max_cap_a = LOT_CAPS_PAIR_1000.get(sym_a, 0.05) * scale
+        lots_a = max(info_a.volume_min, min(lots_a, max_cap_a))
 
         total_val_a = lots_a * notional_per_lot_a
         lots_b = total_val_a / notional_per_lot_b
         lots_b = round(lots_b / info_b.volume_step) * info_b.volume_step
-        lots_b = max(info_b.volume_min, min(lots_b, info_b.volume_max))
+        max_cap_b = LOT_CAPS_PAIR_1000.get(sym_b, 0.05) * scale
+        lots_b = max(info_b.volume_min, min(lots_b, max_cap_b))
 
         return round(lots_a, 2), round(lots_b, 2)
 

@@ -22,7 +22,7 @@ import sys
 import os
 import json
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -188,14 +188,51 @@ TRINITY_ASSETS = {
     }
 }
 
+# Límites máximos estrictos de lotes calibrados para cuenta de 1,000 USD (Micro-Risk)
+LOT_CAPS_1000 = {
+    'USTEC': 0.20,
+    'US500': 0.50,
+    'US30': 0.10,
+    'US2000': 1.00,
+    'XAUUSD': 0.02,
+    'XTIUSD': 0.10,
+    'XNGUSD': 0.05,
+    'EURUSD': 0.05,
+    'GBPUSD': 0.05,
+    'USDJPY': 0.05,
+    'BTCUSD': 0.02
+}
+
 class InstitutionalTrinityStrategy:
     def __init__(self, risk_pct=RISK_PERCENT, session_mode='LNY'):
         self.risk_pct = risk_pct
         self.session_mode = session_mode.upper() # 'LNY' (Londres + NY) o 'NY' (Solo NY)
+        self.cooldown_minutes = 30
+        self.cooldowns = {} # {symbol: expiry_timestamp}
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Referer': 'https://www.cmegroup.com/tools-information/quikstrike/open-interest-heatmap.html'
         }
+
+    def check_cooldown(self, symbol):
+        now_ts = datetime.now(timezone.utc).timestamp()
+        if symbol in self.cooldowns and now_ts < self.cooldowns[symbol]:
+            remaining = int(self.cooldowns[symbol] - now_ts) // 60
+            return False, f"En reposo protector ({remaining} min restantes)"
+
+        # Inspeccionar historial de deals de los últimos 30 minutos en MT5
+        time_from = datetime.now(timezone.utc) - timedelta(minutes=self.cooldown_minutes)
+        deals = mt5.history_deals_get(time_from, datetime.now(timezone.utc))
+        if deals:
+            sym_deals = [d for d in deals if d.symbol == symbol and d.entry == mt5.DEAL_ENTRY_OUT and d.profit < -1.0]
+            if sym_deals:
+                last_loss_deal = max(sym_deals, key=lambda d: d.time)
+                cooldown_expiry = last_loss_deal.time + (self.cooldown_minutes * 60)
+                if now_ts < cooldown_expiry:
+                    self.cooldowns[symbol] = cooldown_expiry
+                    remaining = int(cooldown_expiry - now_ts) // 60
+                    return False, f"Pérdida reciente detectada (#{last_loss_deal.ticket}: ${last_loss_deal.profit:.2f}). Reposo: {remaining} min"
+        return True, "OK"
 
     def fetch_cme_oi_walls(self, cme_code, pid, pf, current_price):
         cache_file = os.path.join(CACHE_DIR, f"oi_cache_{cme_code}.json")
@@ -347,17 +384,27 @@ class InstitutionalTrinityStrategy:
 
     def calculate_lots(self, symbol, sl_points):
         acc = mt5.account_info()
-        risk_cash = acc.balance * (self.risk_pct / 100.0)
+        balance = acc.balance if acc else 1000.0
+        # Escala proporcional de capital anclada a cuenta de 1,000 USD
+        scale = max(0.5, balance / 1000.0)
+        risk_cash = balance * (self.risk_pct / 100.0)
         info = mt5.symbol_info(symbol)
         if not info or sl_points <= 0:
-            return 0.1
+            return LOT_CAPS_1000.get(symbol, 0.01)
+
         profit = mt5.order_calc_profit(mt5.ORDER_TYPE_BUY, symbol, info.volume_min, 1000.0, 1000.0 + sl_points)
         if profit and profit > 0:
             lots = (risk_cash / profit) * info.volume_min
         else:
             lots = risk_cash / (sl_points * info.trade_contract_size)
+
         step = info.volume_step
         lots = round(lots / step) * step
+
+        # Límite máximo estricto para cuenta de 1,000 USD (Micro-Risk calibrado)
+        max_lot_allowed = LOT_CAPS_1000.get(symbol, 0.05) * scale
+        lots = min(lots, max_lot_allowed)
+
         return round(max(info.volume_min, min(lots, info.volume_max)), 2)
 
     def evaluate(self, symbol, cfg, execute=True):
@@ -371,18 +418,25 @@ class InstitutionalTrinityStrategy:
         if spread > cfg['max_spread_pts']:
             return
 
-        # Calcular Magic Number unico para este activo y esta sesion
+        # Calcular Magic Number único para este activo y esta sesión
         base_magic = 710000 if self.session_mode == 'LNY' else 720000
         magic = base_magic + (cfg.get('asset_id', 1) * 100)
 
-        # Verificar posicion activa con este Magic especifico
+        # 1. Guardia Anti-Duplicación Familiar (Trinity LNY + Trinity NY):
+        # Si ya existe una posición abierta en este activo con cualquier magic Trinity (71xxxx o 72xxxx), bloquear.
         positions = mt5.positions_get(symbol=symbol)
         if positions:
-            active = [p for p in positions if p.magic == magic]
-            if active:
+            active_trinity = [p for p in positions if str(p.magic).startswith(('71', '72'))]
+            if active_trinity:
                 return
 
-        # Validacion del filtro de sesion horaria
+        # 2. Cooldown Anti-Ametralladora (Bloqueo de 30 minutos tras pérdida)
+        can_trade, cd_msg = self.check_cooldown(symbol)
+        if not can_trade:
+            print(f"  [🛡️ COOLDOWN ACTIVO] {symbol}: {cd_msg}.")
+            return
+
+        # 3. Validación del filtro de sesión horaria
         in_session = self.is_in_session(symbol)
 
         current_price = (tick.bid + tick.ask) / 2.0
@@ -413,6 +467,14 @@ class InstitutionalTrinityStrategy:
         if not in_session:
             print(f"  [Horario {self.session_mode}] Fuera de ventana operativa. Entrada bloqueada.")
             return
+
+        # 4. Filtro de Ruido de VWAP: No entrar si el precio está pegado al VWAP (evitar whipsaw en rango picado)
+        dist_from_vwap = abs(current_price - vwap)
+        min_vwap_dist = current_price * 0.0010  # Mínimo 0.10% de separación direccional del VWAP
+        if symbol in ['USTEC', 'US500', 'US30', 'US2000', 'XTIUSD']:
+            if dist_from_vwap < min_vwap_dist:
+                print(f"  [🛡️ FILTRO RUIDO VWAP] {symbol} pegado al VWAP ({dist_from_vwap:.2f} < {min_vwap_dist:.2f} pts). Esperando despegue institucional.")
+                return
 
         # FASE 2: RECHAZO EN EL MURO + 2σ EXHAUSTION
         if abs(dist_call) <= cfg['wall_zone_pts'] and current_price >= v2v['sigma1_upper']:

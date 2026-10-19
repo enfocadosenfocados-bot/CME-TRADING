@@ -28,6 +28,18 @@ import numpy as np
 SLIPPAGE_MAX = 10
 DEFAULT_RISK_PCT = 1.0
 
+# Límites máximos estrictos de lotes calibrados para cuenta de 1,000 USD (Micro-Risk)
+LOT_CAPS_HEDGE_1000 = {
+    'USTEC': 0.10,
+    'US500': 0.30,
+    'US30': 0.10,
+    'EURUSD': 0.02,
+    'USDJPY': 0.02,
+    'XAUUSD': 0.01,
+    'XTIUSD': 0.04,
+    'XBRUSD': 0.04
+}
+
 class AdvancedHedgeStrategies:
     def __init__(self, risk_pct=DEFAULT_RISK_PCT):
         self.risk_pct = risk_pct
@@ -95,7 +107,9 @@ class AdvancedHedgeStrategies:
     def calculate_dollar_neutral_lots(self, sym_a, sym_b):
         """Calcula el lotaje de dos piernas para que el valor nocional ($) sea 100% equivalente"""
         acc = mt5.account_info()
-        target_risk = acc.balance * (self.risk_pct / 100.0)
+        balance = acc.balance if acc else 1000.0
+        scale = max(0.5, balance / 1000.0)
+        target_risk = balance * (self.risk_pct / 100.0)
 
         info_a = mt5.symbol_info(sym_a)
         info_b = mt5.symbol_info(sym_b)
@@ -103,7 +117,7 @@ class AdvancedHedgeStrategies:
         tick_b = mt5.symbol_info_tick(sym_b)
 
         if not info_a or not info_b or not tick_a or not tick_b:
-            return 0.1, 0.1
+            return 0.01, 0.01
 
         price_a = tick_a.bid
         price_b = tick_b.bid
@@ -113,12 +127,14 @@ class AdvancedHedgeStrategies:
 
         lots_a = target_risk / (price_a * 0.015 * info_a.trade_contract_size)
         lots_a = round(lots_a / info_a.volume_step) * info_a.volume_step
-        lots_a = max(info_a.volume_min, min(lots_a, info_a.volume_max))
+        max_cap_a = LOT_CAPS_HEDGE_1000.get(sym_a, 0.05) * scale
+        lots_a = max(info_a.volume_min, min(lots_a, max_cap_a))
 
         total_notional_a = lots_a * notional_per_lot_a
         lots_b = total_notional_a / notional_per_lot_b
         lots_b = round(lots_b / info_b.volume_step) * info_b.volume_step
-        lots_b = max(info_b.volume_min, min(lots_b, info_b.volume_max))
+        max_cap_b = LOT_CAPS_HEDGE_1000.get(sym_b, 0.05) * scale
+        lots_b = max(info_b.volume_min, min(lots_b, max_cap_b))
 
         return round(lots_a, 2), round(lots_b, 2)
 
