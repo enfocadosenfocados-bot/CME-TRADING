@@ -58,11 +58,12 @@ class MasterPortfolioBot:
     def __init__(self, mode='ALL_DUAL'):
         self.mode = mode.upper()
         # Instanciar todas las suites de estrategias
-        self.strat_trinity_lny = InstitutionalTrinityStrategy(session_mode='LNY', risk_pct=TRADE_RISK_PCT)
-        self.strat_trinity_ny  = InstitutionalTrinityStrategy(session_mode='NY', risk_pct=TRADE_RISK_PCT)
-        self.strat_pair        = MultiPairStatArbStrategy(risk_pct=TRADE_RISK_PCT)
-        self.strat_cot         = MacroCOTSqueezeStrategy(risk_pct=TRADE_RISK_PCT)
-        self.strat_hedges      = AdvancedHedgeStrategies(risk_pct=TRADE_RISK_PCT)
+        self.strat_trinity_sniper = InstitutionalTrinityStrategy(session_mode='NY_SNIPER', risk_pct=TRADE_RISK_PCT)
+        self.strat_trinity_lny    = InstitutionalTrinityStrategy(session_mode='LNY', risk_pct=TRADE_RISK_PCT)
+        self.strat_trinity_ny     = InstitutionalTrinityStrategy(session_mode='NY', risk_pct=TRADE_RISK_PCT)
+        self.strat_pair           = MultiPairStatArbStrategy(risk_pct=TRADE_RISK_PCT)
+        self.strat_cot            = MacroCOTSqueezeStrategy(risk_pct=TRADE_RISK_PCT)
+        self.strat_hedges         = AdvancedHedgeStrategies(risk_pct=TRADE_RISK_PCT)
         self.connected = False
 
         # Estado de posiciones con parcial 50% ya ejecutado
@@ -299,11 +300,20 @@ class MasterPortfolioBot:
                     print(f"[🏹 TRAILING LOCK] Posición #{p.ticket} ({p.symbol}) asegurando +50% de ganancia en {new_sl}!")
 
     def run_cycle(self, execute=True):
-        # 0A. Gestión de Parciales 50% y Trailing Runner para estrategias direccionales
+        # 0A. Gestión de Parciales 50% y Trailing Runner para estrategias direccionales (24/7)
         self.manage_directional_partials_and_trailing()
 
         # 0B. Gestión de Break-Even para otras posiciones
         self.manage_portfolio_breakeven()
+
+        # 1. Trinity Versión NY SNIPER (Apertura 13:30 a 15:30 UTC | 1 Disparo Único por Activo al Día)
+        if self.mode in ['NY_SNIPER', 'SNIPER']:
+            print("\n>>> [CICLO SNIPER] The Institutional Trinity (Apertura NY 13:30 - 15:30 UTC | 1 Trade/Día)...")
+            for sym, cfg in TRINITY_ASSETS.items():
+                try:
+                    self.strat_trinity_sniper.evaluate(sym, cfg, execute=execute)
+                except Exception as e:
+                    print(f"[-] Error en Trinity Sniper ({sym}): {e}")
 
         # 1A. Trinity Versión Londres + NY (07:00 a 21:00 UTC)
         if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'TRINITY', 'TRINITY_LNY', 'TRINITY_DUAL']:
@@ -369,9 +379,9 @@ class MasterPortfolioBot:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Master Institutional Bot - CME + IC Markets MT5")
     parser.add_argument('--mode', type=str, 
-                        choices=['ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
-                        default='ALL_DUAL',
-                        help='Modo: ALL_DUAL (todas con LNY y NY), ALL_LNY (todas con LNY), ALL_NY (todas con NY), TRINITY_LNY, TRINITY_NY, PAIR, COT, HEDGES')
+                        choices=['NY_SNIPER', 'SNIPER', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
+                        default='NY_SNIPER',
+                        help='Modo: NY_SNIPER (Apertura 13:30-15:30 UTC, 1 trade/día), ALL_DUAL, ALL_LNY, ALL_NY, TRINITY_LNY, TRINITY_NY, PAIR, COT, HEDGES')
     parser.add_argument('--daemon', action='store_true', help='Ejecución continua 24/7 para VPS')
     parser.add_argument('--audit', action='store_true', help='Auditoría de un solo ciclo en modo simulación (sin órdenes)')
     parser.add_argument('--run-once', action='store_true', help='Ejecución de un solo ciclo con envío de órdenes real')

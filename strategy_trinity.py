@@ -278,6 +278,29 @@ class InstitutionalTrinityStrategy:
                     return False, f"Pérdida reciente detectada (#{last_loss_deal.ticket}: ${last_loss_deal.profit:.2f}). Reposo: {remaining} min"
         return True, "OK"
 
+    def has_traded_today(self, symbol, magic):
+        """Verifica si este activo ya ejecutó su trade de francotirador hoy (One Bullet Policy).
+        Revisa posiciones abiertas y deals ejecutados desde las 00:00 UTC de hoy.
+        """
+        now_utc = datetime.now(timezone.utc)
+        today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # 1. Posición actualmente abierta
+        positions = mt5.positions_get(symbol=symbol)
+        if positions:
+            for p in positions:
+                if str(p.magic).startswith(('71', '72', '777')):
+                    return True
+
+        # 2. Deals ejecutados hoy (DEAL_ENTRY_IN)
+        deals = mt5.history_deals_get(today_start, now_utc)
+        if deals:
+            for d in deals:
+                if d.symbol == symbol and d.entry == mt5.DEAL_ENTRY_IN:
+                    if str(d.magic).startswith(('71', '72', '777')):
+                        return True
+        return False
+
     def fetch_cme_oi_walls(self, cme_code, pid, pf, current_price):
         cache_file = os.path.join(CACHE_DIR, f"oi_cache_{cme_code}.json")
         url = f"https://cmegroup-tools.quikstrike.net/User/QuikStrikeView.aspx?pid={pid}&pf={pf}&viewitemid=IntegratedVOIHeatMap"
@@ -405,6 +428,11 @@ class InstitutionalTrinityStrategy:
             return True
 
         # 3. Ventanas específicas por clase de activo
+        if self.session_mode == 'NY_SNIPER':
+            # Ventana Única de Francotirador en Apertura NY: 13:30 a 15:30 UTC
+            # (9:30 AM a 11:30 AM EST - Campana de Wall Street y Pits CME)
+            return 13.5 <= time_decimal < 15.5
+
         is_index = symbol in ['USTEC', 'US500', 'US30', 'US2000']
         is_fx = symbol in ['EURUSD', 'GBPUSD', 'USDJPY']
         is_comm = symbol in ['XAUUSD', 'XTIUSD', 'XNGUSD']
@@ -478,6 +506,12 @@ class InstitutionalTrinityStrategy:
             if active_trinity:
                 return
 
+        # 1B. En modo NY_SNIPER: Regla de 1 trade por activo al día (One Bullet Policy)
+        if self.session_mode == 'NY_SNIPER':
+            if self.has_traded_today(symbol, magic):
+                print(f"  [🎯 SNIPER DIARIO] {symbol}: Trade de apertura ya ejecutado hoy. Entrada bloqueada (One Bullet Policy).")
+                return
+
         # 2. Cooldown Anti-Ametralladora (Bloqueo de 30 minutos tras pérdida)
         can_trade, cd_msg = self.check_cooldown(symbol)
         if not can_trade:
@@ -506,7 +540,12 @@ class InstitutionalTrinityStrategy:
         last_c = rates[-1]
         prev_c = rates[-2]
 
-        sess_label = "Londres+NY" if self.session_mode == 'LNY' else "Solo NY"
+        if self.session_mode == 'NY_SNIPER':
+            sess_label = "Apertura NY Sniper (13:30-15:30 UTC)"
+        elif self.session_mode == 'LNY':
+            sess_label = "Londres+NY"
+        else:
+            sess_label = "Solo NY"
         print(f"\n[TRINITY {self.session_mode}] {cfg['name']:<14} ({symbol:<7}) | Magic: {magic} | Sesion: {sess_label} ({'ABIERTA' if in_session else 'CERRADA'})")
         print(f"  Spot: {current_price:<10} | VWAP: {vwap:<10} | Spread: {spread}")
         print(f"  🛑 Call Wall: {call_wall} (+{abs(dist_call):.2f}) | 🛡️ Put Wall: {put_wall} (-{abs(dist_put):.2f})")
