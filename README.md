@@ -76,6 +76,40 @@ El ecosistema está compuesto por 5 motores cuantitativos independientes y sincr
 
 ---
 
+## 🎯 Parcialización del 50%, Recorridos Empíricos y Trailing Runner Dinámico
+
+Para las estrategias direccionales puras (**The Institutional Trinity LNY `71*` / NY `72*`** y **Macro COT Squeeze `74*`**), el sistema implementa una gestión híbrida institucional basada en los recorridos reales (MFE) registrados en el historial de operaciones de IC Markets:
+
+1. **Entrada con Lote Divisible (2x Mínimo Broker):**
+   - Si un activo requiere entrar con `0.01` (mínimo del broker), el sistema entra obligatoriamente con `0.02` (o múltiplos pares del `volume_step`).
+   - Esto garantiza que MetaTrader 5 pueda ejecutar una orden de cierre parcial exacta del 50% (`0.01`) mediante deal inverso IOC sin errores de volumen inválido.
+2. **TP1 Empírico (Toma de Beneficio 50%):**
+   - Al alcanzarse la distancia `TP1`, el orquestador cierra automáticamente el 50% del volumen en ganancia neta.
+3. **Break-Even Inmediato:**
+   - En el mismo ciclo, el Stop Loss de la posición restante se traslada al precio de apertura más un buffer positivo (`be_buffer_pts`), garantizando que la operación sea matemáticamente libre de riesgo.
+4. **Runner 50% hacia TP2 con Trailing Stop:**
+   - La mitad restante se convierte en un "Runner" que persigue el objetivo de expansión institucional `TP2`, acompañado por un Trailing Stop dinámico que avanza a la distancia `trail_pts`.
+5. **Preservación Estricta de Hedges:**
+   - Las estrategias de pares (**Stat-Arb Multi-Pair `73*`**) y **Coberturas CME `75*`** están estrictamente excluidas de la parcialización mono-leg para proteger la neutralidad de la cobertura delta/dólar.
+
+### Tabla de Calibración de Recorridos Empíricos & Dimensionamiento ($1,000 USD)
+
+| Activo | Símbolo MT5 | Lote Mín. Divisible | TP1 (50% Parcial) | TP2 (Final Runner) | Trailing Stop | BE Buffer | Riesgo Máx (SL) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Nasdaq 100** | `USTEC` | **0.20** | **+28.0 pts** | **+75.0 pts** | 22.0 pts | 2.0 pts | $10 USD (1.0%) |
+| **S&P 500** | `US500` | **0.20** | **+8.0 pts** | **+24.0 pts** | 7.0 pts | 0.8 pts | $10 USD (1.0%) |
+| **Dow Jones 30** | `US30` | **0.20** | **+65.0 pts** | **+180.0 pts** | 50.0 pts | 5.0 pts | $10 USD (1.0%) |
+| **Russell 2000** | `US2000` | **2.00** | **+4.5 pts** | **+14.0 pts** | 4.0 pts | 0.4 pts | $10 USD (1.0%) |
+| **Oro Spot** | `XAUUSD` | **0.02** | **+8.0 pts** ($8) | **+22.0 pts** ($22) | 6.0 pts | 0.5 pts | $10 USD (1.0%) |
+| **Petróleo WTI** | `XTIUSD` | **0.02** | **+0.35 pts** | **+1.10 pts** | 0.30 pts | 0.03 pts | $10 USD (1.0%) |
+| **Gas Natural** | `XNGUSD` | **0.02** | **+0.025 pts** | **+0.080 pts** | 0.020 pts | 0.003 pts | $10 USD (1.0%) |
+| **Euro FX** | `EURUSD` | **0.02** | **+0.0015** (15 pips) | **+0.0045** (45 pips) | 12 pips | 2 pips | $10 USD (1.0%) |
+| **British Pound** | `GBPUSD` | **0.02** | **+0.0018** (18 pips) | **+0.0055** (55 pips) | 15 pips | 2 pips | $10 USD (1.0%) |
+| **Japanese Yen** | `USDJPY` | **0.02** | **+0.20** (20 pips) | **+0.60** (60 pips) | 18 pips | 2 pips | $10 USD (1.0%) |
+| **Bitcoin Futures**| `BTCUSD` | **0.02** | **+350.0 pts** | **+1100.0 pts** | 280.0 pts | 25.0 pts | $10 USD (1.0%) |
+
+---
+
 ## 🛡️ Filtro de Horarios Institucionales & Anti-Rollover
 
 Para evitar los drawdowns causados por spreads nocturnos abiertos y baja liquidez en la sesión asiática, la suite implementa ventanas estrictas de entrada institucional:

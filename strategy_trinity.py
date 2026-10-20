@@ -37,7 +37,7 @@ RISK_PERCENT = 1.0
 SLIPPAGE_MAX = 10
 CACHE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Configuración institucional detallada para los 11 activos con Asset ID único
+# Configuración institucional detallada para los 11 activos con Asset ID único y Recorridos Empíricos (TP1 50% + TP2/Trailing)
 TRINITY_ASSETS = {
     # --- ÍNDICES ACCIONARIOS ---
     'USTEC': {
@@ -48,8 +48,12 @@ TRINITY_ASSETS = {
         'cme_pf': 26,
         'min_expansion_pts': 35.0,
         'wall_zone_pts': 12.0,
-        'tp_buffer_pts': 8.0,
-        'sl_min_pts': 20.0,
+        'tp_buffer_pts': 5.0,
+        'sl_min_pts': 22.0,
+        'tp1_pts': 28.0,
+        'tp2_pts': 75.0,
+        'trail_pts': 22.0,
+        'be_buffer_pts': 2.0,
         'max_spread_pts': 2.5,
         'annual_iv': 0.19
     },
@@ -61,8 +65,12 @@ TRINITY_ASSETS = {
         'cme_pf': 26,
         'min_expansion_pts': 10.0,
         'wall_zone_pts': 3.5,
-        'tp_buffer_pts': 2.0,
-        'sl_min_pts': 6.0,
+        'tp_buffer_pts': 1.5,
+        'sl_min_pts': 7.0,
+        'tp1_pts': 8.0,
+        'tp2_pts': 24.0,
+        'trail_pts': 7.0,
+        'be_buffer_pts': 0.8,
         'max_spread_pts': 0.8,
         'annual_iv': 0.15
     },
@@ -74,8 +82,12 @@ TRINITY_ASSETS = {
         'cme_pf': 26,
         'min_expansion_pts': 60.0,
         'wall_zone_pts': 20.0,
-        'tp_buffer_pts': 15.0,
-        'sl_min_pts': 35.0,
+        'tp_buffer_pts': 10.0,
+        'sl_min_pts': 45.0,
+        'tp1_pts': 65.0,
+        'tp2_pts': 180.0,
+        'trail_pts': 50.0,
+        'be_buffer_pts': 5.0,
         'max_spread_pts': 3.0,
         'annual_iv': 0.14
     },
@@ -87,8 +99,12 @@ TRINITY_ASSETS = {
         'cme_pf': 26,
         'min_expansion_pts': 5.0,
         'wall_zone_pts': 2.0,
-        'tp_buffer_pts': 1.0,
+        'tp_buffer_pts': 0.8,
         'sl_min_pts': 4.0,
+        'tp1_pts': 4.5,
+        'tp2_pts': 14.0,
+        'trail_pts': 4.0,
+        'be_buffer_pts': 0.4,
         'max_spread_pts': 0.8,
         'annual_iv': 0.22
     },
@@ -102,7 +118,11 @@ TRINITY_ASSETS = {
         'min_expansion_pts': 4.0,
         'wall_zone_pts': 1.5,
         'tp_buffer_pts': 0.8,
-        'sl_min_pts': 3.0,
+        'sl_min_pts': 6.0,
+        'tp1_pts': 8.0,
+        'tp2_pts': 22.0,
+        'trail_pts': 6.0,
+        'be_buffer_pts': 0.5,
         'max_spread_pts': 0.50,
         'annual_iv': 0.16
     },
@@ -114,8 +134,12 @@ TRINITY_ASSETS = {
         'cme_pf': 5,
         'min_expansion_pts': 0.40,
         'wall_zone_pts': 0.15,
-        'tp_buffer_pts': 0.10,
+        'tp_buffer_pts': 0.08,
         'sl_min_pts': 0.35,
+        'tp1_pts': 0.35,
+        'tp2_pts': 1.10,
+        'trail_pts': 0.30,
+        'be_buffer_pts': 0.03,
         'max_spread_pts': 0.05,
         'annual_iv': 0.32
     },
@@ -127,8 +151,12 @@ TRINITY_ASSETS = {
         'cme_pf': 5,
         'min_expansion_pts': 0.030,
         'wall_zone_pts': 0.010,
-        'tp_buffer_pts': 0.008,
+        'tp_buffer_pts': 0.005,
         'sl_min_pts': 0.025,
+        'tp1_pts': 0.025,
+        'tp2_pts': 0.080,
+        'trail_pts': 0.020,
+        'be_buffer_pts': 0.003,
         'max_spread_pts': 0.010,
         'annual_iv': 0.55
     },
@@ -142,7 +170,11 @@ TRINITY_ASSETS = {
         'min_expansion_pts': 0.0015,
         'wall_zone_pts': 0.0006,
         'tp_buffer_pts': 0.0003,
-        'sl_min_pts': 0.0012,
+        'sl_min_pts': 0.0014,
+        'tp1_pts': 0.0015,
+        'tp2_pts': 0.0045,
+        'trail_pts': 0.0012,
+        'be_buffer_pts': 0.0002,
         'max_spread_pts': 0.00015,
         'annual_iv': 0.08
     },
@@ -155,7 +187,11 @@ TRINITY_ASSETS = {
         'min_expansion_pts': 0.0020,
         'wall_zone_pts': 0.0008,
         'tp_buffer_pts': 0.0004,
-        'sl_min_pts': 0.0015,
+        'sl_min_pts': 0.0016,
+        'tp1_pts': 0.0018,
+        'tp2_pts': 0.0055,
+        'trail_pts': 0.0015,
+        'be_buffer_pts': 0.0002,
         'max_spread_pts': 0.00020,
         'annual_iv': 0.09
     },
@@ -169,6 +205,10 @@ TRINITY_ASSETS = {
         'wall_zone_pts': 0.08,
         'tp_buffer_pts': 0.05,
         'sl_min_pts': 0.20,
+        'tp1_pts': 0.20,
+        'tp2_pts': 0.60,
+        'trail_pts': 0.18,
+        'be_buffer_pts': 0.02,
         'max_spread_pts': 0.025,
         'annual_iv': 0.10
     },
@@ -181,26 +221,30 @@ TRINITY_ASSETS = {
         'cme_pf': 26,
         'min_expansion_pts': 400.0,
         'wall_zone_pts': 150.0,
-        'tp_buffer_pts': 80.0,
-        'sl_min_pts': 300.0,
+        'tp_buffer_pts': 60.0,
+        'sl_min_pts': 320.0,
+        'tp1_pts': 350.0,
+        'tp2_pts': 1100.0,
+        'trail_pts': 280.0,
+        'be_buffer_pts': 25.0,
         'max_spread_pts': 15.0,
         'annual_iv': 0.52
     }
 }
 
-# Límites máximos estrictos de lotes calibrados para cuenta de 1,000 USD (Micro-Risk)
+# Límites de lotes divisibles (mínimo 2x step para parcializar 50% exacto) calibrados para cuenta de 1,000 USD
 LOT_CAPS_1000 = {
-    'USTEC': 0.20,
-    'US500': 0.50,
-    'US30': 0.10,
-    'US2000': 1.00,
-    'XAUUSD': 0.02,
-    'XTIUSD': 0.10,
-    'XNGUSD': 0.05,
-    'EURUSD': 0.05,
-    'GBPUSD': 0.05,
-    'USDJPY': 0.05,
-    'BTCUSD': 0.02
+    'USTEC': 0.20,   # Min 0.10 -> Entra con 0.20 (50% = 0.10 en TP1, 0.10 en Trailing/TP2)
+    'US500': 0.40,   # Min 0.10 -> Entra con 0.20 o 0.40 (50% = 0.10 o 0.20)
+    'US30': 0.20,    # Min 0.10 -> Entra con 0.20 (50% = 0.10)
+    'US2000': 2.00,  # Min 1.00 -> Entra con 2.00 (50% = 1.00)
+    'XAUUSD': 0.02,  # Min 0.01 -> Entra con 0.02 (50% = 0.01 en TP1, 0.01 en Trailing/TP2)
+    'XTIUSD': 0.06,  # Min 0.01 -> Entra con 0.02 a 0.06 (múltiplo par)
+    'XNGUSD': 0.04,  # Min 0.01 -> Entra con 0.02 a 0.04 (múltiplo par)
+    'EURUSD': 0.04,  # Min 0.01 -> Entra con 0.02 a 0.04 (múltiplo par)
+    'GBPUSD': 0.04,  # Min 0.01 -> Entra con 0.02 a 0.04 (múltiplo par)
+    'USDJPY': 0.04,  # Min 0.01 -> Entra con 0.02 a 0.04 (múltiplo par)
+    'BTCUSD': 0.02   # Min 0.01 -> Entra con 0.02 (50% = 0.01 en TP1, 0.01 en Trailing/TP2)
 }
 
 class InstitutionalTrinityStrategy:
@@ -390,7 +434,7 @@ class InstitutionalTrinityStrategy:
         risk_cash = balance * (self.risk_pct / 100.0)
         info = mt5.symbol_info(symbol)
         if not info or sl_points <= 0:
-            return LOT_CAPS_1000.get(symbol, 0.01)
+            return LOT_CAPS_1000.get(symbol, 0.02)
 
         profit = mt5.order_calc_profit(mt5.ORDER_TYPE_BUY, symbol, info.volume_min, 1000.0, 1000.0 + sl_points)
         if profit and profit > 0:
@@ -399,13 +443,17 @@ class InstitutionalTrinityStrategy:
             lots = risk_cash / (sl_points * info.trade_contract_size)
 
         step = info.volume_step
-        lots = round(lots / step) * step
-
-        # Límite máximo estricto para cuenta de 1,000 USD (Micro-Risk calibrado)
-        max_lot_allowed = LOT_CAPS_1000.get(symbol, 0.05) * scale
+        min_divisible = info.volume_min * 2.0  # Mínimo 2 unidades (ej. 0.02 si min=0.01) para parcializar 50%
+        max_lot_allowed = max(min_divisible, LOT_CAPS_1000.get(symbol, 0.04) * scale)
         lots = min(lots, max_lot_allowed)
+        lots = max(min_divisible, lots)
 
-        return round(max(info.volume_min, min(lots, info.volume_max)), 2)
+        # Redondear siempre a múltiplo PAR de volume_step (2*step, 4*step...) para que el 50% sea exacto
+        even_step = step * 2.0
+        lots = round(lots / even_step) * even_step
+        lots = max(min_divisible, lots)
+
+        return round(min(lots, info.volume_max), 2)
 
     def evaluate(self, symbol, cfg, execute=True):
         mt5.symbol_select(symbol, True)
@@ -463,6 +511,7 @@ class InstitutionalTrinityStrategy:
         print(f"  Spot: {current_price:<10} | VWAP: {vwap:<10} | Spread: {spread}")
         print(f"  🛑 Call Wall: {call_wall} (+{abs(dist_call):.2f}) | 🛡️ Put Wall: {put_wall} (-{abs(dist_put):.2f})")
         print(f"  Vol2Vol 1σ: ±{v2v['daily_move_pts']} | 2σ Rango: [{v2v['sigma2_lower']:.2f} .. {v2v['sigma2_upper']:.2f}]")
+        print(f"  🎯 Recorrido Empírico -> TP1 (50% Parcial): +{cfg['tp1_pts']} pts | TP2 (Final): +{cfg['tp2_pts']} pts | Trail: {cfg['trail_pts']} pts")
 
         if not in_session:
             print(f"  [Horario {self.session_mode}] Fuera de ventana operativa. Entrada bloqueada.")
@@ -481,10 +530,11 @@ class InstitutionalTrinityStrategy:
             has_wick = (last_c['high'] - max(last_c['open'], last_c['close'])) > abs(last_c['close'] - last_c['open'])
             if last_c['close'] < last_c['open'] or has_wick:
                 sl_price = round(max(call_wall, v2v['sigma2_upper']) + (cfg['tp_buffer_pts'] * 1.5), info.digits)
-                tp_price = round(vwap, info.digits)
+                tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(current_price - vwap), cfg['tp2_pts']))
+                tp_price = round(current_price - tp_dist, info.digits)
                 lots = self.calculate_lots(symbol, abs(current_price - sl_price))
                 comment = f"TR_{self.session_mode}_{symbol}_RejCall"[:31]
-                print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO CALL WALL en {call_wall} (SELL) | Magic: {magic}")
+                print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO CALL WALL en {call_wall} (SELL) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
                 return
@@ -493,10 +543,11 @@ class InstitutionalTrinityStrategy:
             has_wick = (min(last_c['open'], last_c['close']) - last_c['low']) > abs(last_c['close'] - last_c['open'])
             if last_c['close'] > last_c['open'] or has_wick:
                 sl_price = round(min(put_wall, v2v['sigma2_lower']) - (cfg['tp_buffer_pts'] * 1.5), info.digits)
-                tp_price = round(vwap, info.digits)
+                tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(vwap - current_price), cfg['tp2_pts']))
+                tp_price = round(current_price + tp_dist, info.digits)
                 lots = self.calculate_lots(symbol, abs(current_price - sl_price))
                 comment = f"TR_{self.session_mode}_{symbol}_RejPut"[:31]
-                print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO PUT WALL en {put_wall} (BUY) | Magic: {magic}")
+                print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO PUT WALL en {put_wall} (BUY) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
                 return
@@ -504,24 +555,26 @@ class InstitutionalTrinityStrategy:
         # FASE 1: IMÁN DE EXPANSIÓN
         if dist_call >= cfg['min_expansion_pts'] and current_price > vwap and call_wall <= v2v['sigma2_upper']:
             if last_c['close'] > prev_c['high'] or current_price > last_c['open']:
-                tp_price = round(call_wall - cfg['tp_buffer_pts'], info.digits)
-                sl_pts = max(cfg['sl_min_pts'], current_price - vwap)
+                tp_dist = max(cfg['tp1_pts'] * 1.6, min(dist_call - cfg['tp_buffer_pts'], cfg['tp2_pts']))
+                tp_price = round(current_price + tp_dist, info.digits)
+                sl_pts = max(cfg['sl_min_pts'], min(current_price - vwap, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price - sl_pts, info.digits)
                 lots = self.calculate_lots(symbol, sl_pts)
                 comment = f"TR_{self.session_mode}_{symbol}_MagCall"[:31]
-                print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN ALCISTA HACIA CALL WALL {call_wall} (BUY) | Magic: {magic}")
+                print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN ALCISTA HACIA CALL WALL {call_wall} (BUY) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
                 return
 
         if dist_put >= cfg['min_expansion_pts'] and current_price < vwap and put_wall >= v2v['sigma2_lower']:
             if last_c['close'] < prev_c['low'] or current_price < last_c['open']:
-                tp_price = round(put_wall + cfg['tp_buffer_pts'], info.digits)
-                sl_pts = max(cfg['sl_min_pts'], vwap - current_price)
+                tp_dist = max(cfg['tp1_pts'] * 1.6, min(dist_put - cfg['tp_buffer_pts'], cfg['tp2_pts']))
+                tp_price = round(current_price - tp_dist, info.digits)
+                sl_pts = max(cfg['sl_min_pts'], min(vwap - current_price, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price + sl_pts, info.digits)
                 lots = self.calculate_lots(symbol, sl_pts)
                 comment = f"TR_{self.session_mode}_{symbol}_MagPut"[:31]
-                print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN BAJISTA HACIA PUT WALL {put_wall} (SELL) | Magic: {magic}")
+                print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN BAJISTA HACIA PUT WALL {put_wall} (SELL) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
                 return
