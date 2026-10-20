@@ -8,14 +8,15 @@ echo ===========================================================================
 echo.
 echo  Seleccione la estrategia cuantitativa que desea ejecutar:
 echo.
-echo   [S] NY SNIPER    : Francotirador Apertura NY (13:30-15:30 UTC - 1 Trade/Dia) [RECOMENDADO]
-echo   [1] TRINITY [LNY]: Sesion Londres + Nueva York (07:00 a 21:00 UTC) [Magic: 71YY00]
-echo   [2] TRINITY [NY] : Sesion Solo Nueva York      (13:00 a 21:00 UTC) [Magic: 72YY00]
-echo   [3] TRINITY DUAL : Ambas Sesiones en Paralelo                      [Magics 71/72]
-echo   [4] STAT-ARB     : Multi-Par Cointegrado (4 Pares Market-Neutral)  [Magic: 73YY00]
-echo   [5] COT SQUEEZE  : Macro COT Squeeze & Momentum (11 Activos CME)   [Magic: 74YY00]
-echo   [6] HEDGES CME   : 6 Coberturas Institucionales (CVOL, Roll, etc)  [Magic: 75YY00]
-echo   [7] SUITE MASTER TOTAL (Todas las estrategias integradas 24/7)
+echo   [S] ALL SNIPER    : SUITE TOTAL CON TRINITY SNIPER (Apertura NY 13:30-15:30 + Hedges + Stat-Arb + COT) [RECOMENDADO]
+echo   [T] TRINITY SNIPER: Solo Trinity Apertura NY (Sin Hedges ni Arbitrajes - 1 Trade/Dia)
+echo   [1] TRINITY [LNY] : Sesion Londres + Nueva York (07:00 a 21:00 UTC) [Magic: 71YY00]
+echo   [2] TRINITY [NY]  : Sesion Solo Nueva York      (13:00 a 21:00 UTC) [Magic: 72YY00]
+echo   [3] TRINITY DUAL  : Ambas Sesiones en Paralelo                      [Magics 71/72]
+echo   [4] STAT-ARB      : Multi-Par Cointegrado (4 Pares Market-Neutral)  [Magic: 73YY00]
+echo   [5] COT SQUEEZE   : Macro COT Squeeze & Momentum (11 Activos CME)   [Magic: 74YY00]
+echo   [6] HEDGES CME    : 6 Coberturas Institucionales (CVOL, Roll, etc)  [Magic: 75YY00]
+echo   [7] SUITE MASTER TOTAL (Trinity LNY+NY Dual + Hedges + Stat-Arb + COT)
 echo   [8] SUITE MASTER LNY   (Trinity LNY + Stat-Arb + COT + 6 Hedges)
 echo   [9] SUITE MASTER NY    (Trinity NY  + Stat-Arb + COT + 6 Hedges)
 echo   [A] AUDITORIA EN VIVO  (Escanear todo el universo sin enviar ordenes)
@@ -24,6 +25,7 @@ echo.
 set /p opt=Ingrese su opcion: 
 
 if /i "%opt%"=="S" goto optS
+if /i "%opt%"=="T" goto optT
 if /i "%opt%"=="1" goto opt1
 if /i "%opt%"=="2" goto opt2
 if /i "%opt%"=="3" goto opt3
@@ -39,8 +41,15 @@ goto optS
 
 :optS
 cls
-echo Iniciando The Institutional Trinity - NY SNIPER (13:30-15:30 UTC - 1 Trade/Dia)...
-py -3.13 "%~dp0master_institutional_bot.py" --mode NY_SNIPER --daemon
+echo Iniciando SUITE TOTAL CON TRINITY SNIPER (Trinity Sniper + Hedges + Stat-Arb + COT)...
+py -3.13 "%~dp0master_institutional_bot.py" --mode ALL_SNIPER --daemon
+pause
+goto :eof
+
+:optT
+cls
+echo Iniciando Solo Trinity Apertura NY SNIPER (13:30-15:30 UTC - 1 Trade/Dia)...
+py -3.13 "%~dp0master_institutional_bot.py" --mode TRINITY_SNIPER --daemon
 pause
 goto :eof
 

@@ -307,7 +307,7 @@ class MasterPortfolioBot:
         self.manage_portfolio_breakeven()
 
         # 1. Trinity Versión NY SNIPER (Apertura 13:30 a 15:30 UTC | 1 Disparo Único por Activo al Día)
-        if self.mode in ['NY_SNIPER', 'SNIPER']:
+        if self.mode in ['ALL_SNIPER', 'NY_SNIPER', 'TRINITY_SNIPER', 'SNIPER']:
             print("\n>>> [CICLO SNIPER] The Institutional Trinity (Apertura NY 13:30 - 15:30 UTC | 1 Trade/Día)...")
             for sym, cfg in TRINITY_ASSETS.items():
                 try:
@@ -334,7 +334,7 @@ class MasterPortfolioBot:
                     print(f"[-] Error en Trinity NY ({sym}): {e}")
 
         # 2. Stat-Arb Multi-Pair Trading (4 Pares Cointegrados)
-        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'PAIR']:
+        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL_SNIPER', 'NY_SNIPER', 'PAIR']:
             print("\n>>> [CICLO] Evaluando Estrategia 2: Stat-Arb Multi-Pair Trading (4 Pares Cointegrados)...")
             for p_key, cfg in MULTI_PAIRS.items():
                 try:
@@ -343,7 +343,7 @@ class MasterPortfolioBot:
                     print(f"[-] Error en Pair Trading ({p_key}): {e}")
 
         # 3. Macro COT Squeeze Engine (11 Activos CFTC/CME)
-        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'COT']:
+        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL_SNIPER', 'NY_SNIPER', 'COT']:
             print("\n>>> [CICLO] Evaluando Estrategia 3: Macro COT Squeeze Engine (11 Activos CFTC/CME)...")
             for sym, cfg in COT_CONFIG.items():
                 try:
@@ -352,7 +352,7 @@ class MasterPortfolioBot:
                     print(f"[-] Error en COT ({sym}): {e}")
 
         # 4. Suite Avanzada: 6 Estrategias Institucionales con Hedge (CME + IC Markets)
-        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'HEDGES']:
+        if self.mode in ['ALL', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL_SNIPER', 'NY_SNIPER', 'HEDGES']:
             print("\n>>> [CICLO] Evaluando Estrategia 4: 6 Coberturas Institucionales CME (Hedges)...")
             try:
                 self.strat_hedges.run_all(execute=execute)
@@ -379,9 +379,9 @@ class MasterPortfolioBot:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Master Institutional Bot - CME + IC Markets MT5")
     parser.add_argument('--mode', type=str, 
-                        choices=['NY_SNIPER', 'SNIPER', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
-                        default='NY_SNIPER',
-                        help='Modo: NY_SNIPER (Apertura 13:30-15:30 UTC, 1 trade/día), ALL_DUAL, ALL_LNY, ALL_NY, TRINITY_LNY, TRINITY_NY, PAIR, COT, HEDGES')
+                        choices=['ALL_SNIPER', 'NY_SNIPER', 'TRINITY_SNIPER', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
+                        default='ALL_SNIPER',
+                        help='Modo: ALL_SNIPER (Trinity Sniper en Apertura NY + Stat-Arb + COT + 6 Hedges), TRINITY_SNIPER, ALL_DUAL, ALL_LNY, ALL_NY, PAIR, COT, HEDGES')
     parser.add_argument('--daemon', action='store_true', help='Ejecución continua 24/7 para VPS')
     parser.add_argument('--audit', action='store_true', help='Auditoría de un solo ciclo en modo simulación (sin órdenes)')
     parser.add_argument('--run-once', action='store_true', help='Ejecución de un solo ciclo con envío de órdenes real')
