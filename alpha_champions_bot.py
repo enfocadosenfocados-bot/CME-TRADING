@@ -229,15 +229,30 @@ class AlphaChampionsBot:
             mt5.shutdown()
             self.connected = False
 
+    def get_broker_time(self, symbol=None):
+        """Obtiene la hora oficial exacta del servidor de IC Markets directamente desde MT5."""
+        ref_sym = symbol or (list(self.symbol_map.values())[0] if self.symbol_map else 'EURUSD')
+        try:
+            rates = mt5.copy_rates_from_pos(ref_sym, mt5.TIMEFRAME_M1, 0, 1)
+            if rates is not None and len(rates) > 0:
+                candle_dt = datetime.fromtimestamp(rates[-1]['time'], timezone.utc)
+                now_utc = datetime.now(timezone.utc)
+                offset_hours = int(round((candle_dt - now_utc).total_seconds() / 3600.0))
+                return now_utc + timedelta(hours=offset_hours)
+        except Exception:
+            pass
+        # Fallback estándar IC Markets (EET UTC+2 en invierno / EEST UTC+3 en verano)
+        return datetime.now(timezone.utc) + timedelta(hours=2)
+
     def has_traded_today(self, broker_symbol, magic):
-        now_utc = datetime.now(timezone.utc)
-        today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+        broker_now = self.get_broker_time(broker_symbol)
+        today_start = broker_now.replace(hour=0, minute=0, second=0, microsecond=0)
         positions = mt5.positions_get(symbol=broker_symbol)
         if positions:
             for p in positions:
                 if p.magic == magic:
                     return True
-        deals = mt5.history_deals_get(today_start, now_utc)
+        deals = mt5.history_deals_get(today_start, broker_now)
         if deals:
             for d in deals:
                 if d.symbol == broker_symbol and d.entry == mt5.DEAL_ENTRY_IN and d.magic == magic:
@@ -259,8 +274,8 @@ class AlphaChampionsBot:
     # =========================================================================
     def evaluate_breakout_2leg(self, canonical, cfg, execute=True):
         broker_sym = self.symbol_map.get(canonical, canonical)
-        now_utc = datetime.now(timezone.utc)
-        hour_broker = (now_utc.hour + 3) % 24
+        broker_dt = self.get_broker_time(broker_sym)
+        hour_broker = broker_dt.hour
 
         # Ventana de Oro: 13:00 Broker (10:00 UTC / 04:00 CDMX)
         in_window = (hour_broker == cfg['hour_broker'])
@@ -333,8 +348,8 @@ class AlphaChampionsBot:
     # =========================================================================
     def evaluate_cot_squeeze(self, cfg, execute=True):
         broker_sym = self.symbol_map.get('US2000', 'US2000')
-        now_utc = datetime.now(timezone.utc)
-        hour_broker = (now_utc.hour + 3) % 24
+        broker_dt = self.get_broker_time(broker_sym)
+        hour_broker = broker_dt.hour
         in_window = (hour_broker == cfg['hour_broker'])
         magic = cfg['magic']
 
@@ -394,8 +409,8 @@ class AlphaChampionsBot:
     def evaluate_stat_arb(self, cfg, execute=True):
         sym1 = self.symbol_map.get(cfg['leg1'], cfg['leg1'])
         sym2 = self.symbol_map.get(cfg['leg2'], cfg['leg2'])
-        now_utc = datetime.now(timezone.utc)
-        hour_broker = (now_utc.hour + 3) % 24
+        broker_dt = self.get_broker_time(sym1)
+        hour_broker = broker_dt.hour
         in_window = hour_broker in cfg['hours_broker']
         magic = cfg['magic']
 
@@ -544,7 +559,9 @@ class AlphaChampionsBot:
 
     def run_cycle(self, execute=True):
         self.manage_c2_and_trailing()
-        print("\n>>> [CICLO ALPHA CHAMPIONS] Escaneando las 6 Estrategias Ganadoras...")
+        broker_now = self.get_broker_time()
+        now_utc = datetime.now(timezone.utc)
+        print(f"\n>>> [CICLO ALPHA CHAMPIONS] Hora Broker IC Markets: {broker_now.strftime('%H:%M:%S')} (UTC: {now_utc.strftime('%H:%M:%S')}) | Escaneando 6 Estrategias...")
 
         # 1-4. Los 4 Breakouts Europeos (13:00 Broker)
         for sym in ['XAUUSD', 'DE40', 'EURUSD', 'GBPUSD']:

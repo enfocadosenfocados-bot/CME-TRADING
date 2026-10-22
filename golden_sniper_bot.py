@@ -352,6 +352,20 @@ class GoldenSniperBot:
             mt5.shutdown()
             self.connected = False
 
+    def get_broker_time(self, symbol=None):
+        """Obtiene la hora oficial exacta del servidor de IC Markets directamente desde MT5."""
+        ref_sym = symbol or (list(self.symbol_map.values())[0] if self.symbol_map else 'EURUSD')
+        try:
+            rates = mt5.copy_rates_from_pos(ref_sym, mt5.TIMEFRAME_M1, 0, 1)
+            if rates is not None and len(rates) > 0:
+                candle_dt = datetime.fromtimestamp(rates[-1]['time'], timezone.utc)
+                now_utc = datetime.now(timezone.utc)
+                offset_hours = int(round((candle_dt - now_utc).total_seconds() / 3600.0))
+                return now_utc + timedelta(hours=offset_hours)
+        except Exception:
+            pass
+        return datetime.now(timezone.utc) + timedelta(hours=2)
+
     def check_cooldown(self, symbol):
         now_ts = datetime.now(timezone.utc).timestamp()
         if symbol in self.cooldowns and now_ts < self.cooldowns[symbol]:
@@ -790,7 +804,9 @@ class GoldenSniperBot:
 
     def run_cycle(self, execute=True):
         self.manage_partials_and_trailing()
-        print("\n>>> [CICLO GOLDEN SNIPER] Escaneando los 6 Activos Campeones en Horas de Oro...")
+        broker_now = self.get_broker_time()
+        now_utc = datetime.now(timezone.utc)
+        print(f"\n>>> [CICLO GOLDEN SNIPER] Hora Broker IC Markets: {broker_now.strftime('%H:%M:%S')} (UTC: {now_utc.strftime('%H:%M:%S')}) | Escaneando 6 Activos...")
         for canonical, cfg in GOLDEN_CONFIG.items():
             try:
                 self.evaluate_asset(canonical, cfg, execute=execute)
