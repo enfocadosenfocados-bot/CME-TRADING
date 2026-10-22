@@ -3,15 +3,15 @@
 GOLDEN SNIPER TRADING SUITE - 6 ACTIVOS CAMPEONES EN HORAS DE ORO
 ================================================================================
 Estrategia Institucional Exclusiva: Open Interest Walls + Vol2Vol + VWAP M5
-Calibrada únicamente para los 6 activos ganadores de la auditoría forense.
+Compatible con CUALQUIER Broker de MetaTrader 5 (Detección automática de símbolos).
 
 TAXONOMÍA DE MAGICS Y NOMBRES:
-- Magic 880100 | GS_US30   | Dow Jones 30    | Lote: 0.20 | 14:00-15:00 y 19:00-20:00 UTC
-- Magic 880200 | GS_USTEC  | Nasdaq 100     | Lote: 0.20 | 14:00-15:00 UTC
-- Magic 880300 | GS_US2000 | Russell 2000   | Lote: 2.00 | 13:00-16:00 UTC
-- Magic 880400 | GS_XAUUSD | Gold (Oro)      | Lote: 0.02 | 02:00-03:00 y 16:00-17:00 UTC
-- Magic 880500 | GS_GBPUSD | British Pound   | Lote: 0.02 | 02:00-03:00 y 13:00-14:00 UTC
-- Magic 880600 | GS_BTCUSD | Bitcoin Futures | Lote: 0.02 | 13:00-14:00 y 00:00-01:00 UTC
+- Magic 880100 | GS_US30   | Dow Jones 30    | Horas: 17:00 y 22:00 Broker (14-15 y 19-20 UTC)
+- Magic 880200 | GS_USTEC  | Nasdaq 100     | Horas: 17:00 Broker (14-15 UTC)
+- Magic 880300 | GS_US2000 | Russell 2000   | Horas: 16:00 a 18:00 Broker (13-16 UTC)
+- Magic 880400 | GS_XAUUSD | Gold (Oro)      | Horas: 05:00 y 19:00 Broker (02-03 y 16-17 UTC)
+- Magic 880500 | GS_GBPUSD | British Pound   | Horas: 05:00 y 16:00 Broker (02-03 y 13-14 UTC)
+- Magic 880600 | GS_BTCUSD | Bitcoin Futures | Horas: 16:00 y 03:00 Broker (13-14 y 00-01 UTC)
 ================================================================================
 """
 
@@ -20,22 +20,49 @@ import os
 import json
 import math
 import time
+import glob
 import argparse
 from datetime import datetime, timezone, timedelta
 
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 
-import MetaTrader5 as mt5
-from curl_cffi import requests
-from bs4 import BeautifulSoup
+# Importación segura de MetaTrader 5
+try:
+    import MetaTrader5 as mt5
+except ImportError:
+    print("[ERROR CRÍTICO] La librería MetaTrader5 no está instalada.")
+    print("Ejecute en la consola: pip install MetaTrader5 pandas requests")
+    sys.exit(1)
+
+# Importación segura de dependencias HTTP / Scraping
+try:
+    from curl_cffi import requests
+except ImportError:
+    import requests
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+
 import pandas as pd
 
 CACHE_DIR = os.path.dirname(os.path.abspath(__file__))
 MONITOR_INTERVAL_SECS = 15
 SLIPPAGE_MAX = 10
 
-# Configuración exclusiva para los 6 activos ganadores
+# Alias de símbolos en diferentes brokers (IC Markets, Exness, XM, FTMO, Eightcap, etc.)
+SYMBOL_ALIASES = {
+    'US30':   ['US30', 'US30.raw', 'US30m', 'DJ30', 'WS30', 'DJIA', 'US30Cash', 'USA30', 'US30+'],
+    'USTEC':  ['USTEC', 'USTEC.raw', 'USTECm', 'NAS100', 'US100', 'NDX', 'USTECH', 'NAS100m', 'US100Cash', 'US100+'],
+    'US2000': ['US2000', 'US2000.raw', 'US2000m', 'RUT', 'USSmall2000', 'Russell2000', 'US2000Cash', 'US2000+'],
+    'XAUUSD': ['XAUUSD', 'XAUUSD.raw', 'XAUUSDm', 'GOLD', 'GOLD.raw', 'GOLDm', 'XAUUSD+'],
+    'GBPUSD': ['GBPUSD', 'GBPUSD.raw', 'GBPUSDm', 'GBPUSD+', 'GBPUSD.ecn'],
+    'BTCUSD': ['BTCUSD', 'BTCUSD.raw', 'BTCUSDm', 'BTCUSD+', 'BITCOIN', 'BTC']
+}
+
+# Configuración institucional exclusiva para los 6 activos ganadores
 GOLDEN_CONFIG = {
     'US30': {
         'name': 'GS_US30',
@@ -44,7 +71,7 @@ GOLDEN_CONFIG = {
         'cme_code': 'YM',
         'cme_pid': 130,
         'cme_pf': 26,
-        'min_lot': 0.20,
+        'fallback_lot': 0.20,
         'windows_utc': [(14.0, 15.0), (19.0, 20.0)],
         'windows_broker': ['17:00', '22:00'],
         'windows_cdmx': ['08:00', '13:00'],
@@ -66,7 +93,7 @@ GOLDEN_CONFIG = {
         'cme_code': 'NQ',
         'cme_pid': 121,
         'cme_pf': 26,
-        'min_lot': 0.20,
+        'fallback_lot': 0.20,
         'windows_utc': [(14.0, 15.0)],
         'windows_broker': ['17:00'],
         'windows_cdmx': ['08:00'],
@@ -88,7 +115,7 @@ GOLDEN_CONFIG = {
         'cme_code': 'RTY',
         'cme_pid': 133,
         'cme_pf': 26,
-        'min_lot': 2.00,
+        'fallback_lot': 2.00,
         'windows_utc': [(13.0, 16.0)],
         'windows_broker': ['16:00-18:00'],
         'windows_cdmx': ['07:00-10:00'],
@@ -110,7 +137,7 @@ GOLDEN_CONFIG = {
         'cme_code': 'GC',
         'cme_pid': 40,
         'cme_pf': 6,
-        'min_lot': 0.02,
+        'fallback_lot': 0.02,
         'windows_utc': [(2.0, 3.0), (16.0, 17.0)],
         'windows_broker': ['05:00', '19:00'],
         'windows_cdmx': ['20:00', '10:00'],
@@ -132,7 +159,7 @@ GOLDEN_CONFIG = {
         'cme_code': '6B',
         'cme_pid': 2,
         'cme_pf': 26,
-        'min_lot': 0.02,
+        'fallback_lot': 0.02,
         'windows_utc': [(2.0, 3.0), (13.0, 14.0)],
         'windows_broker': ['05:00', '16:00'],
         'windows_cdmx': ['20:00', '07:00'],
@@ -154,7 +181,7 @@ GOLDEN_CONFIG = {
         'cme_code': 'BTC',
         'cme_pid': 350,
         'cme_pf': 26,
-        'min_lot': 0.02,
+        'fallback_lot': 0.02,
         'windows_utc': [(13.0, 14.0), (0.0, 1.0)],
         'windows_broker': ['16:00', '03:00'],
         'windows_cdmx': ['07:00', '18:00'],
@@ -181,6 +208,7 @@ class GoldenSniperBot:
         }
         self.state_file = os.path.join(CACHE_DIR, 'golden_sniper_partial_state.json')
         self.partial_closed = self._load_partial_state()
+        self.symbol_map = {}  # { 'canonical': 'actual_broker_symbol' }
         self.connected = False
 
     def _load_partial_state(self):
@@ -200,16 +228,124 @@ class GoldenSniperBot:
             pass
 
     def connect(self):
-        if not mt5.initialize():
-            print(f"[-] Error iniciando MetaTrader 5: {mt5.last_error()}")
+        # 1. Verificar si existe configuración de cuenta personalizada (account_config.json)
+        config_path = os.path.join(CACHE_DIR, 'account_config.json')
+        custom_cfg = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    custom_cfg = json.load(f)
+            except Exception:
+                pass
+
+        init_kwargs = {}
+        if custom_cfg.get('path'):
+            init_kwargs['path'] = custom_cfg['path']
+        if custom_cfg.get('login'):
+            init_kwargs['login'] = int(custom_cfg['login'])
+        if custom_cfg.get('password'):
+            init_kwargs['password'] = custom_cfg['password']
+        if custom_cfg.get('server'):
+            init_kwargs['server'] = custom_cfg['server']
+
+        # 2. Intentar inicializar MT5
+        initialized = False
+        if init_kwargs:
+            initialized = mt5.initialize(**init_kwargs)
+
+        if not initialized:
+            # Intento estándar (conecta a cualquier MT5 abierto en la sesión)
+            initialized = mt5.initialize()
+
+        if not initialized:
+            # Búsqueda automática de terminales instalados en Program Files
+            candidate_paths = [
+                r"C:\Program Files\MetaTrader 5\terminal64.exe",
+                r"C:\Program Files\IC Markets Global MT5\terminal64.exe",
+                r"C:\Program Files\XM Global MT5\terminal64.exe",
+                r"C:\Program Files\Exness MT5\terminal64.exe",
+                r"C:\Program Files (x86)\MetaTrader 5\terminal64.exe"
+            ]
+            for p in candidate_paths:
+                if os.path.exists(p):
+                    if mt5.initialize(path=p):
+                        initialized = True
+                        break
+
+        if not initialized:
+            print("\n" + "=" * 85)
+            print("❌ ERROR: NO SE PUDO CONECTAR CON METATRADER 5")
+            print(f"   Código de Error MT5: {mt5.last_error()}")
+            print("=" * 85)
+            print("👉 LISTA DE VERIFICACIÓN PARA RESOLVERLO:")
+            print("  1. ¿Está MetaTrader 5 ABIERTO en tu VPS?")
+            print("     -> Abre tu terminal MT5 y asegúrate de haber iniciado sesión en tu cuenta.")
+            print("  2. ¿Está activado el Trading Automático en MT5?")
+            print("     -> El botón 'Algo Trading' (Trading Automático) en la barra superior debe estar en VERDE.")
+            print("  3. Permisos en MT5:")
+            print("     -> Ve al menú: Herramientas -> Opciones -> Asesores Expertos (Expert Advisors).")
+            print("     -> Marca: [✓] 'Permitir trading algorítmico' (Allow Algo Trading).")
+            print("     -> Marca: [✓] 'Permitir importación de DLL' (Allow DLL imports).")
+            print("  4. Si tu MT5 está en una carpeta distinta o tienes múltiples brokers:")
+            print("     -> Crea un archivo 'account_config.json' en la carpeta del bot con:")
+            print('        {\n          "path": "C:\\\\Ruta\\\\A\\\\Tu\\\\terminal64.exe"\n        }')
+            print("=" * 85 + "\n")
             return False
+
         acc = mt5.account_info()
+        if not acc:
+            print("[-] Conectado a terminal MT5 pero sin cuenta activa. Inicie sesión en MT5.")
+            return False
+
         print("=" * 85)
-        print(f"🚀 CONEXIÓN ESTABLECIDA CON IC MARKETS ({acc.server})")
-        print(f"   Cuenta: {acc.login} | Moneda: {acc.currency} | Balance: ${acc.balance:,.2f} USD | Margen Libre: ${acc.margin_free:,.2f} USD")
+        print(f"🚀 CONEXIÓN EXITOSA CON METATRADER 5")
+        print(f"   Broker Server : {acc.server}")
+        print(f"   Número Cuenta : {acc.login}")
+        print(f"   Nombre Titular: {acc.name}")
+        print(f"   Divisa Cuenta : {acc.currency}")
+        print(f"   Balance Total : ${acc.balance:,.2f} {acc.currency}")
+        print(f"   Margen Libre  : ${acc.margin_free:,.2f} {acc.currency}")
         print("=" * 85)
+
+        # 3. Resolver nombres de símbolos en el broker actual
+        self.resolve_broker_symbols()
         self.connected = True
         return True
+
+    def resolve_broker_symbols(self):
+        """Detecta automáticamente el nombre exacto de cada símbolo en cualquier broker."""
+        all_symbols = mt5.symbols_get()
+        if not all_symbols:
+            print("[-] No se pudieron cargar símbolos desde MT5.")
+            return
+
+        available_names = {s.name.upper(): s.name for s in all_symbols}
+
+        print("\n🔍 Detectando símbolos en el broker:")
+        for canonical, aliases in SYMBOL_ALIASES.items():
+            found_symbol = None
+            for alias in aliases:
+                if alias.upper() in available_names:
+                    found_symbol = available_names[alias.upper()]
+                    break
+            
+            # Búsqueda parcial difusa si no coincide directo
+            if not found_symbol:
+                for s_name in available_names.values():
+                    if canonical in s_name.upper():
+                        found_symbol = s_name
+                        break
+
+            if found_symbol:
+                mt5.symbol_select(found_symbol, True)
+                self.symbol_map[canonical] = found_symbol
+                info = mt5.symbol_info(found_symbol)
+                min_divisible = round(max(info.volume_min, info.volume_step) * 2.0, 2) if info else GOLDEN_CONFIG[canonical]['fallback_lot']
+                print(f"  ✓ {canonical:<7} -> Detectado como: '{found_symbol:<12}' | Lote Mínimo Parcializable: {min_divisible}")
+            else:
+                self.symbol_map[canonical] = canonical
+                print(f"  ⚠ {canonical:<7} -> No encontrado. Usando por defecto '{canonical}'")
+        print("-" * 85)
 
     def disconnect(self):
         if self.connected:
@@ -235,13 +371,13 @@ class GoldenSniperBot:
                     return False, f"Pérdida reciente (#{last_loss.ticket}: ${last_loss.profit:.2f}). Reposo: {remaining} min"
         return True, "OK"
 
-    def is_in_golden_window(self, symbol, cfg):
+    def is_in_golden_window(self, canonical_symbol, cfg):
         now_utc = datetime.now(timezone.utc)
         weekday = now_utc.weekday()
         time_decimal = now_utc.hour + (now_utc.minute / 60.0)
 
         # 1. Fin de semana (Viernes 20:55 UTC a Domingo 22:00 UTC) excepto Bitcoin
-        if symbol != 'BTCUSD':
+        if canonical_symbol != 'BTCUSD':
             if weekday == 5:
                 return False
             if weekday == 6 and time_decimal < 22.0:
@@ -249,7 +385,7 @@ class GoldenSniperBot:
             if weekday == 4 and time_decimal >= 20.91:
                 return False
 
-        # 2. Bloqueo Anti-Rollover de IC Markets (20:55 a 22:30 UTC)
+        # 2. Bloqueo Anti-Rollover de broker (20:55 a 22:30 UTC)
         if 20.91 <= time_decimal < 22.5:
             return False
 
@@ -259,7 +395,7 @@ class GoldenSniperBot:
                 return True
         return False
 
-    def has_traded_in_window(self, symbol, magic, cfg):
+    def has_traded_in_window(self, broker_symbol, magic, cfg):
         """One Bullet Policy: 1 trade por activo en cada ventana horaria de oro."""
         now_utc = datetime.now(timezone.utc)
         time_decimal = now_utc.hour + (now_utc.minute / 60.0)
@@ -281,28 +417,36 @@ class GoldenSniperBot:
             microsecond=0
         )
 
-        # Posición actualmente abierta con magic de Golden Sniper
-        positions = mt5.positions_get(symbol=symbol)
+        positions = mt5.positions_get(symbol=broker_symbol)
         if positions:
             for p in positions:
                 if p.magic == magic or str(p.magic).startswith('88'):
                     return True
 
-        # Deals ejecutados en esta ventana hoy
         deals = mt5.history_deals_get(win_start_dt, now_utc)
         if deals:
             for d in deals:
-                if d.symbol == symbol and d.entry == mt5.DEAL_ENTRY_IN:
+                if d.symbol == broker_symbol and d.entry == mt5.DEAL_ENTRY_IN:
                     if d.magic == magic or str(d.magic).startswith('88'):
                         return True
         return False
+
+    def get_min_divisible_lot(self, broker_symbol, fallback_lot):
+        info = mt5.symbol_info(broker_symbol)
+        if info:
+            step = info.volume_step
+            min_lot = info.volume_min
+            # 2x mínimo para asegurar que el 50% parcial sea válido en MT5
+            calculated = max(min_lot * 2.0, step * 2.0)
+            return round(calculated, 2)
+        return fallback_lot
 
     def fetch_oi_walls(self, cme_code, pid, pf, spot_price, annual_iv):
         cache_file = os.path.join(CACHE_DIR, f"oi_cache_{cme_code}.json")
         url = f"https://cmegroup-tools.quikstrike.net/User/QuikStrikeView.aspx?pid={pid}&pf={pf}&viewitemid=IntegratedVOIHeatMap"
         try:
-            r = requests.get(url, headers=self.headers, impersonate='chrome124', timeout=8)
-            if r.status_code == 200 and len(r.text) > 10000:
+            r = requests.get(url, headers=self.headers, timeout=8)
+            if r.status_code == 200 and len(r.text) > 10000 and BeautifulSoup:
                 soup = BeautifulSoup(r.text, 'html.parser')
                 tables = soup.find_all('table')
                 if len(tables) >= 7:
@@ -361,8 +505,8 @@ class GoldenSniperBot:
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
-    def calculate_vwap(self, symbol, num_bars=100):
-        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M5, 0, num_bars)
+    def calculate_vwap(self, broker_symbol, num_bars=100):
+        rates = mt5.copy_rates_from_pos(broker_symbol, mt5.TIMEFRAME_M5, 0, num_bars)
         if rates is None or len(rates) == 0:
             return None
         df = pd.DataFrame(rates)
@@ -379,36 +523,37 @@ class GoldenSniperBot:
             'daily_move_pts': round(daily_sigma, 4)
         }
 
-    def evaluate_asset(self, symbol, cfg, execute=True):
-        mt5.symbol_select(symbol, True)
-        tick = mt5.symbol_info_tick(symbol)
+    def evaluate_asset(self, canonical_symbol, cfg, execute=True):
+        broker_symbol = self.symbol_map.get(canonical_symbol, canonical_symbol)
+        mt5.symbol_select(broker_symbol, True)
+        tick = mt5.symbol_info_tick(broker_symbol)
         if not tick or tick.bid <= 0:
             return
 
-        info = mt5.symbol_info(symbol)
+        info = mt5.symbol_info(broker_symbol)
         spread = round(tick.ask - tick.bid, info.digits)
         if spread > cfg['max_spread_pts']:
             return
 
         magic = cfg['magic']
 
-        # 1. Guardia anti-duplicación (si ya hay posición abierta de Golden Sniper, esperar)
-        positions = mt5.positions_get(symbol=symbol)
+        # 1. Guardia anti-duplicación
+        positions = mt5.positions_get(symbol=broker_symbol)
         if positions:
             active_gs = [p for p in positions if p.magic == magic or str(p.magic).startswith('88')]
             if active_gs:
                 return
 
         # 2. Cooldown anti-ametralladora
-        can_trade, cd_msg = self.check_cooldown(symbol)
+        can_trade, cd_msg = self.check_cooldown(broker_symbol)
         if not can_trade:
-            print(f"  [🛡️ COOLDOWN] {cfg['name']} ({symbol}): {cd_msg}.")
+            print(f"  [🛡️ COOLDOWN] {cfg['name']} ({broker_symbol}): {cd_msg}.")
             return
 
         # 3. Validación de Ventana de Oro
-        in_session = self.is_in_golden_window(symbol, cfg)
-        if in_session and self.has_traded_in_window(symbol, magic, cfg):
-            print(f"  [🏆 ONE BULLET] {cfg['name']} ({symbol}): Trade ya ejecutado en esta ventana horaria.")
+        in_session = self.is_in_golden_window(canonical_symbol, cfg)
+        if in_session and self.has_traded_in_window(broker_symbol, magic, cfg):
+            print(f"  [🏆 ONE BULLET] {cfg['name']} ({broker_symbol}): Trade ya ejecutado en esta ventana horaria.")
             return
 
         current_price = (tick.bid + tick.ask) / 2.0
@@ -418,13 +563,13 @@ class GoldenSniperBot:
 
         call_wall = oi['call_wall']
         put_wall = oi['put_wall']
-        vwap = self.calculate_vwap(symbol) or current_price
+        vwap = self.calculate_vwap(broker_symbol) or current_price
         v2v = self.calculate_vol2vol(current_price, cfg['annual_iv'])
 
         dist_call = call_wall - current_price
         dist_put = current_price - put_wall
 
-        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M5, 0, 3)
+        rates = mt5.copy_rates_from_pos(broker_symbol, mt5.TIMEFRAME_M5, 0, 3)
         if rates is None or len(rates) < 2:
             return
         last_c = rates[-1]
@@ -432,8 +577,10 @@ class GoldenSniperBot:
 
         win_strs = [f"{int(s):02d}:00-{int(e):02d}:00 UTC" for s, e in cfg['windows_utc']]
         sess_label = f"Horas de Oro ({', '.join(win_strs)})"
-        print(f"\n[{cfg['name']}] {cfg['title']:<16} ({symbol:<7}) | Magic: {magic} | Ventana: {sess_label} ({'ABIERTA' if in_session else 'CERRADA'})")
-        print(f"  Spot: {current_price:<10} | VWAP: {vwap:<10} | Spread: {spread} | Lote Fijo: {cfg['min_lot']}")
+        min_lot = self.get_min_divisible_lot(broker_symbol, cfg['fallback_lot'])
+
+        print(f"\n[{cfg['name']}] {cfg['title']:<16} ({broker_symbol:<9}) | Magic: {magic} | Ventana: {sess_label} ({'ABIERTA' if in_session else 'CERRADA'})")
+        print(f"  Spot: {current_price:<10} | VWAP: {vwap:<10} | Spread: {spread} | Lote: {min_lot}")
         print(f"  🛑 Call Wall: {call_wall} (+{abs(dist_call):.2f}) | 🛡️ Put Wall: {put_wall} (-{abs(dist_put):.2f})")
         print(f"  Vol2Vol 1σ: ±{v2v['daily_move_pts']} | 2σ Rango: [{v2v['sigma2_lower']:.2f} .. {v2v['sigma2_upper']:.2f}]")
         print(f"  🎯 Recorridos -> TP1 (50% Parcial): +{cfg['tp1_pts']} pts | TP2 (Final): +{cfg['tp2_pts']} pts | Trail: {cfg['trail_pts']} pts")
@@ -445,12 +592,12 @@ class GoldenSniperBot:
         # 4. Filtro de Ruido de VWAP
         dist_from_vwap = abs(current_price - vwap)
         min_vwap_dist = current_price * 0.0010
-        if symbol in ['USTEC', 'US30', 'US2000']:
+        if canonical_symbol in ['USTEC', 'US30', 'US2000']:
             if dist_from_vwap < min_vwap_dist:
-                print(f"  [🛡️ FILTRO RUIDO VWAP] {symbol} pegado al VWAP ({dist_from_vwap:.2f} < {min_vwap_dist:.2f} pts). Esperando despegue.")
+                print(f"  [🛡️ FILTRO RUIDO VWAP] {broker_symbol} pegado al VWAP ({dist_from_vwap:.2f} < {min_vwap_dist:.2f} pts). Esperando despegue.")
                 return
 
-        lots = cfg['min_lot']
+        lots = min_lot
 
         # GATILLO 1: RECHAZO EN MURO + 2σ EXHAUSTION (SELL)
         if abs(dist_call) <= cfg['wall_zone_pts'] and current_price >= v2v['sigma1_upper']:
@@ -459,10 +606,10 @@ class GoldenSniperBot:
                 sl_price = round(max(call_wall, v2v['sigma2_upper']) + (cfg['tp_buffer_pts'] * 1.5), info.digits)
                 tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(current_price - vwap), cfg['tp2_pts']))
                 tp_price = round(current_price - tp_dist, info.digits)
-                comment = f"GS_{symbol}_SELL"[:31]
-                print(f"[💥 GATILLO RECHAZO CALL] {symbol} SELL @ {current_price} | Lotes: {lots} | Magic: {magic}")
+                comment = f"GS_{canonical_symbol}_SELL"[:31]
+                print(f"[💥 GATILLO RECHAZO CALL] {broker_symbol} SELL @ {current_price} | Lotes: {lots} | Magic: {magic}")
                 if execute:
-                    self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
+                    self.send_order(broker_symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
                 return
 
         # GATILLO 2: RECHAZO EN MURO + 2σ EXHAUSTION (BUY)
@@ -472,10 +619,10 @@ class GoldenSniperBot:
                 sl_price = round(min(put_wall, v2v['sigma2_lower']) - (cfg['tp_buffer_pts'] * 1.5), info.digits)
                 tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(vwap - current_price), cfg['tp2_pts']))
                 tp_price = round(current_price + tp_dist, info.digits)
-                comment = f"GS_{symbol}_BUY"[:31]
-                print(f"[💥 GATILLO RECHAZO PUT] {symbol} BUY @ {current_price} | Lotes: {lots} | Magic: {magic}")
+                comment = f"GS_{canonical_symbol}_BUY"[:31]
+                print(f"[💥 GATILLO RECHAZO PUT] {broker_symbol} BUY @ {current_price} | Lotes: {lots} | Magic: {magic}")
                 if execute:
-                    self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
+                    self.send_order(broker_symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
                 return
 
         # GATILLO 3: IMÁN DE EXPANSIÓN ALCISTA HACIA CALL WALL (BUY)
@@ -485,10 +632,10 @@ class GoldenSniperBot:
                 tp_price = round(current_price + tp_dist, info.digits)
                 sl_pts = max(cfg['sl_min_pts'], min(current_price - vwap, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price - sl_pts, info.digits)
-                comment = f"GS_{symbol}_BUY_Mag"[:31]
-                print(f"[🧲 GATILLO IMÁN ALCISTA] {symbol} BUY @ {current_price} hacia Call Wall {call_wall} | Lotes: {lots} | Magic: {magic}")
+                comment = f"GS_{canonical_symbol}_BUY_Mag"[:31]
+                print(f"[🧲 GATILLO IMÁN ALCISTA] {broker_symbol} BUY @ {current_price} hacia Call Wall {call_wall} | Lotes: {lots} | Magic: {magic}")
                 if execute:
-                    self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
+                    self.send_order(broker_symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
                 return
 
         # GATILLO 4: IMÁN DE EXPANSIÓN BAJISTA HACIA PUT WALL (SELL)
@@ -498,10 +645,10 @@ class GoldenSniperBot:
                 tp_price = round(current_price - tp_dist, info.digits)
                 sl_pts = max(cfg['sl_min_pts'], min(vwap - current_price, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price + sl_pts, info.digits)
-                comment = f"GS_{symbol}_SELL_Mag"[:31]
-                print(f"[🧲 GATILLO IMÁN BAJISTA] {symbol} SELL @ {current_price} hacia Put Wall {put_wall} | Lotes: {lots} | Magic: {magic}")
+                comment = f"GS_{canonical_symbol}_SELL_Mag"[:31]
+                print(f"[🧲 GATILLO IMÁN BAJISTA] {broker_symbol} SELL @ {current_price} hacia Put Wall {put_wall} | Lotes: {lots} | Magic: {magic}")
                 if execute:
-                    self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
+                    self.send_order(broker_symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
                 return
 
         print(f"  [Estado] En rango normal. Sin desbalance institucional extremo.")
@@ -519,23 +666,26 @@ class GoldenSniperBot:
                 del self.partial_closed[t]
             self._save_partial_state()
 
+        # Invertir symbol_map para buscar config por broker_symbol
+        rev_map = {v: k for k, v in self.symbol_map.items()}
+
         for p in positions:
-            # Solo posiciones de la suite Golden Sniper (Magic 88xxxx)
             if not str(p.magic).startswith('88'):
                 continue
 
-            sym = p.symbol
-            if sym not in GOLDEN_CONFIG:
+            broker_sym = p.symbol
+            canonical = rev_map.get(broker_sym, broker_sym)
+            if canonical not in GOLDEN_CONFIG:
                 continue
 
-            cfg = GOLDEN_CONFIG[sym]
+            cfg = GOLDEN_CONFIG[canonical]
             tp1_pts = cfg['tp1_pts']
             tp2_pts = cfg['tp2_pts']
             trail_pts = cfg['trail_pts']
             be_buffer = cfg['be_buffer_pts']
 
-            tick = mt5.symbol_info_tick(sym)
-            info = mt5.symbol_info(sym)
+            tick = mt5.symbol_info_tick(broker_sym)
+            info = mt5.symbol_info(broker_sym)
             if not tick or not info:
                 continue
 
@@ -559,26 +709,26 @@ class GoldenSniperBot:
                         req = {
                             "action": mt5.TRADE_ACTION_DEAL,
                             "position": p.ticket,
-                            "symbol": sym,
+                            "symbol": broker_sym,
                             "volume": float(close_vol),
                             "type": close_type,
                             "price": float(close_price),
                             "deviation": 10,
                             "magic": p.magic,
-                            "comment": f"P50_{sym}"[:31],
+                            "comment": f"P50_{canonical}"[:31],
                             "type_time": mt5.ORDER_TIME_GTC,
                             "type_filling": mt5.ORDER_FILLING_IOC,
                         }
                         res = mt5.order_send(req)
                         if res and res.retcode == mt5.TRADE_RETCODE_DONE:
                             self.partial_closed[t_key] = {
-                                "symbol": sym,
+                                "symbol": broker_sym,
                                 "open_price": p.price_open,
                                 "closed_vol": close_vol,
                                 "partial_time": datetime.now(timezone.utc).isoformat()
                             }
                             self._save_partial_state()
-                            print(f"[💰 TOMA DE BENEFICIO 50%] Ticket #{p.ticket} ({sym}): Cerrado 50% ({close_vol} lotes) con ganancia de +{excursion_pts:.2f} pts!")
+                            print(f"[💰 TOMA DE BENEFICIO 50%] Ticket #{p.ticket} ({broker_sym}): Cerrado 50% ({close_vol} lotes) con ganancia de +{excursion_pts:.2f} pts!")
 
                             # Trasladar inmediatamente SL a Break-Even + Buffer
                             new_sl = round(p.price_open + be_buffer, info.digits) if is_buy else round(p.price_open - be_buffer, info.digits)
@@ -590,7 +740,7 @@ class GoldenSniperBot:
                             }
                             sl_res = mt5.order_send(sl_req)
                             if sl_res and sl_res.retcode == mt5.TRADE_RETCODE_DONE:
-                                print(f"[🛡️ BREAK-EVEN] Ticket #{p.ticket} ({sym}): SL protegido en {new_sl} (+{be_buffer} buffer). Runner 50% persiguiendo TP2 (+{tp2_pts} pts).")
+                                print(f"[🛡️ BREAK-EVEN] Ticket #{p.ticket} ({broker_sym}): SL protegido en {new_sl} (+{be_buffer} buffer). Runner 50% persiguiendo TP2 (+{tp2_pts} pts).")
             # FASE 2: Trailing Stop dinámico para el 50% Runner
             else:
                 stop_dist = info.trade_stops_level * info.point
@@ -602,7 +752,7 @@ class GoldenSniperBot:
                             req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(candidate_sl), "tp": float(p.tp)}
                             res = mt5.order_send(req)
                             if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                                print(f"[🏃 TRAILING RUNNER] Ticket #{p.ticket} ({sym}): SL avanzado a {candidate_sl} (+{excursion_pts:.2f} pts).")
+                                print(f"[🏃 TRAILING RUNNER] Ticket #{p.ticket} ({broker_sym}): SL avanzado a {candidate_sl} (+{excursion_pts:.2f} pts).")
                 else:
                     candidate_sl = round(cur_price + trail_pts, info.digits)
                     be_level = round(p.price_open - be_buffer, info.digits)
@@ -611,15 +761,15 @@ class GoldenSniperBot:
                             req = {"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket, "sl": float(candidate_sl), "tp": float(p.tp)}
                             res = mt5.order_send(req)
                             if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                                print(f"[🏃 TRAILING RUNNER] Ticket #{p.ticket} ({sym}): SL avanzado a {candidate_sl} (+{excursion_pts:.2f} pts).")
+                                print(f"[🏃 TRAILING RUNNER] Ticket #{p.ticket} ({broker_sym}): SL avanzado a {candidate_sl} (+{excursion_pts:.2f} pts).")
 
-    def send_order(self, symbol, order_type, sl, tp, lots, comment, magic):
-        tick = mt5.symbol_info_tick(symbol)
+    def send_order(self, broker_symbol, order_type, sl, tp, lots, comment, magic):
+        tick = mt5.symbol_info_tick(broker_symbol)
         price = tick.ask if order_type.upper() == 'BUY' else tick.bid
         ot = mt5.ORDER_TYPE_BUY if order_type.upper() == 'BUY' else mt5.ORDER_TYPE_SELL
         req = {
             "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": symbol,
+            "symbol": broker_symbol,
             "volume": float(lots),
             "type": ot,
             "price": float(price),
@@ -633,19 +783,19 @@ class GoldenSniperBot:
         }
         res = mt5.order_send(req)
         if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-            print(f"[✅ DISPARO EJECUTADO] #{res.order} | {symbol} {order_type} | Lotes: {res.volume} | SL: {sl} | TP: {tp} | Magic: {magic}")
+            print(f"[✅ DISPARO EJECUTADO] #{res.order} | {broker_symbol} {order_type} | Lotes: {res.volume} | SL: {sl} | TP: {tp} | Magic: {magic}")
         else:
             err = res.comment if res else "None"
-            print(f"[-] Error enviando orden en {symbol}: {err}")
+            print(f"[-] Error enviando orden en {broker_symbol}: {err}")
 
     def run_cycle(self, execute=True):
         self.manage_partials_and_trailing()
         print("\n>>> [CICLO GOLDEN SNIPER] Escaneando los 6 Activos Campeones en Horas de Oro...")
-        for sym, cfg in GOLDEN_CONFIG.items():
+        for canonical, cfg in GOLDEN_CONFIG.items():
             try:
-                self.evaluate_asset(sym, cfg, execute=execute)
+                self.evaluate_asset(canonical, cfg, execute=execute)
             except Exception as e:
-                print(f"[-] Error evaluando {sym}: {e}")
+                print(f"[-] Error evaluando {canonical}: {e}")
 
     def run_daemon(self):
         print("\n" + "=" * 85)
@@ -664,7 +814,7 @@ class GoldenSniperBot:
             print("\n[*] Bot Golden Sniper detenido de forma segura.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Golden Sniper Suite - IC Markets MT5")
+    parser = argparse.ArgumentParser(description="Golden Sniper Suite - MT5 Multi-Broker")
     parser.add_argument('--daemon', action='store_true', help='Ejecución continua 24/7 en VPS')
     parser.add_argument('--audit', action='store_true', help='Auditoría de un solo ciclo en modo simulación (sin órdenes)')
     parser.add_argument('--run-once', action='store_true', help='Ejecución de un solo ciclo en vivo')

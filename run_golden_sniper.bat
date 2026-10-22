@@ -6,15 +6,36 @@ echo ===========================================================================
 echo     GOLDEN SNIPER SUITE - 6 ACTIVOS CAMPEONES EN HORAS DE ORO
 echo ===============================================================================
 echo.
-echo  Activos:
-echo   - GS_US30   (Dow Jones 30)    | Magic: 880100 | Lote: 0.20 | 17:00 y 22:00 Broker
-echo   - GS_USTEC  (Nasdaq 100)     | Magic: 880200 | Lote: 0.20 | 17:00 Broker
-echo   - GS_US2000 (Russell 2000)   | Magic: 880300 | Lote: 2.00 | 16:00 a 18:00 Broker
-echo   - GS_XAUUSD (Gold / Oro)     | Magic: 880400 | Lote: 0.02 | 05:00 y 19:00 Broker
-echo   - GS_GBPUSD (British Pound)  | Magic: 880500 | Lote: 0.02 | 05:00 y 16:00 Broker
-echo   - GS_BTCUSD (Bitcoin)        | Magic: 880600 | Lote: 0.02 | 16:00 y 03:00 Broker
+
+set PYTHON_CMD=
+py -3.13 --version >nul 2>&1 && set PYTHON_CMD=py -3.13
+if "%PYTHON_CMD%"=="" (
+    py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
+)
+if "%PYTHON_CMD%"=="" (
+    python --version >nul 2>&1 && set PYTHON_CMD=python
+)
+
+if "%PYTHON_CMD%"=="" (
+    echo [ERROR CRITICO] Python no esta detectado en el PATH de Windows.
+    echo.
+    echo Para solucionarlo:
+    echo 1. Abre el instalador de Python descargado en la VPS.
+    echo 2. Marca la casilla "Add python.exe to PATH".
+    echo 3. O ejecuta 'install.bat' para configurar el entorno.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [*] Interprete detectado: %PYTHON_CMD%
+echo [*] Conectando a MetaTrader 5 y escaneando simbolos del broker...
 echo.
-echo  Iniciando ejecucion continua 24/7 en VPS...
-echo.
-py -3.13 "%~dp0golden_sniper_bot.py" --daemon
+
+%PYTHON_CMD% "%~dp0golden_sniper_bot.py" --daemon
+if %errorlevel% neq 0 (
+    echo.
+    echo [!] El proceso se detuvo con codigo %errorlevel%.
+    echo Revisa el mensaje superior para corregir la configuracion.
+)
 pause

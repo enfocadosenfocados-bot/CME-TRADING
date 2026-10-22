@@ -14,7 +14,22 @@ Copy-Item "$ext\CME-TRADING-main\*" -Destination $dest -Recurse -Force
 Remove-Item $zip -Force -ErrorAction SilentlyContinue
 Remove-Item $ext -Recurse -Force -ErrorAction SilentlyContinue
 
-# Crear accesos directos en el escritorio
+# Detectar comando de Python e instalar/verificar librerías requeridas
+Write-Host "Verificando dependencias en Python..." -ForegroundColor Cyan
+$pyCmd = $null
+if (Get-Command "py" -ErrorAction SilentlyContinue) {
+    $pyCmd = "py -3.13"
+} elseif (Get-Command "python" -ErrorAction SilentlyContinue) {
+    $pyCmd = "python"
+}
+
+if ($pyCmd) {
+    try {
+        & cmd /c "$pyCmd -m pip install -r `"$dest\requirements.txt`" --quiet"
+    } catch {}
+}
+
+# Crear acceso directo en el escritorio
 try {
     $WshShell = New-Object -ComObject WScript.Shell
     $Desktop = [Environment]::GetFolderPath("Desktop")

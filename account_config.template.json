@@ -1,0 +1,7 @@
+{
+  "_comentario": "Opcional: Si MT5 ya esta abierto en la VPS, NO necesitas tocar este archivo.",
+  "path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+  "login": 12345678,
+  "password": "TuPasswordAqui",
+  "server": "TuBroker-Server"
+}
