@@ -4,14 +4,20 @@ color 0B
 cls
 
 set PYTHON_CMD=
-python --version >nul 2>&1 && set PYTHON_CMD=python
+py -3.12 --version >nul 2>&1 && set PYTHON_CMD=py -3.12
 if "%PYTHON_CMD%"=="" (
-    py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
+    py -3.13 --version >nul 2>&1 && set PYTHON_CMD=py -3.13
 )
 if "%PYTHON_CMD%"=="" (
-    py --version >nul 2>&1 && set PYTHON_CMD=py
+    py -3.11 --version >nul 2>&1 && set PYTHON_CMD=py -3.11
 )
-if "%PYTHON_CMD%"=="" set PYTHON_CMD=python
+if "%PYTHON_CMD%"=="" (
+    py -3.10 --version >nul 2>&1 && set PYTHON_CMD=py -3.10
+)
+if "%PYTHON_CMD%"=="" (
+    python --version 2>&1 | findstr /R "3\.10 3\.11 3\.12 3\.13" >nul 2>&1 && set PYTHON_CMD=python
+)
+if "%PYTHON_CMD%"=="" set PYTHON_CMD=py -3.12
 
 echo ===============================================================================
 echo     CME INSTITUTIONAL QUANT SUITE - IC MARKETS MT5 AUTONOMOUS TRADER

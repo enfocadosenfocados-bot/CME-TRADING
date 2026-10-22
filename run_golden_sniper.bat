@@ -8,25 +8,24 @@ echo ===========================================================================
 echo.
 
 set PYTHON_CMD=
-python --version >nul 2>&1 && set PYTHON_CMD=python
+py -3.12 --version >nul 2>&1 && set PYTHON_CMD=py -3.12
 if "%PYTHON_CMD%"=="" (
-    py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
+    py -3.13 --version >nul 2>&1 && set PYTHON_CMD=py -3.13
 )
 if "%PYTHON_CMD%"=="" (
-    py --version >nul 2>&1 && set PYTHON_CMD=py
+    py -3.11 --version >nul 2>&1 && set PYTHON_CMD=py -3.11
+)
+if "%PYTHON_CMD%"=="" (
+    py -3.10 --version >nul 2>&1 && set PYTHON_CMD=py -3.10
+)
+if "%PYTHON_CMD%"=="" (
+    python --version 2>&1 | findstr /R "3\.10 3\.11 3\.12 3\.13" >nul 2>&1 && set PYTHON_CMD=python
 )
 
 if "%PYTHON_CMD%"=="" (
-    echo [AVISO] Intentando instalar Python runtime automaticamente...
-    py install 3.13
-    py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
-)
-
-if "%PYTHON_CMD%"=="" (
-    echo [ERROR CRITICO] Python no esta instalado en el sistema.
-    echo Abre PowerShell y ejecuta: py install 3.13
-    pause
-    exit /b 1
+    echo [AVISO] Instalando Python 3.12 compatible con MetaTrader 5...
+    py install 3.12
+    set PYTHON_CMD=py -3.12
 )
 
 echo [*] Interprete detectado: %PYTHON_CMD%
