@@ -8,12 +8,12 @@ echo ===========================================================================
 echo.
 
 set PYTHON_CMD=
-py -3.13 --version >nul 2>&1 && set PYTHON_CMD=py -3.13
+python --version >nul 2>&1 && set PYTHON_CMD=python
 if "%PYTHON_CMD%"=="" (
     py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
 )
 if "%PYTHON_CMD%"=="" (
-    python --version >nul 2>&1 && set PYTHON_CMD=python
+    py --version >nul 2>&1 && set PYTHON_CMD=py
 )
 
 if "%PYTHON_CMD%"=="" (
@@ -29,6 +29,8 @@ if "%PYTHON_CMD%"=="" (
 )
 
 echo [*] Interprete detectado: %PYTHON_CMD%
+%PYTHON_CMD% --version
+echo.
 echo [*] Conectando a MetaTrader 5 y escaneando simbolos del broker...
 echo.
 

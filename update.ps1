@@ -14,19 +14,24 @@ Copy-Item "$ext\CME-TRADING-main\*" -Destination $dest -Recurse -Force
 Remove-Item $zip -Force -ErrorAction SilentlyContinue
 Remove-Item $ext -Recurse -Force -ErrorAction SilentlyContinue
 
-# Detectar comando de Python e instalar/verificar librerías requeridas
-Write-Host "Verificando dependencias en Python..." -ForegroundColor Cyan
+# Detectar interprete de Python disponible en el sistema (sin forzar 3.13)
 $pyCmd = $null
-if (Get-Command "py" -ErrorAction SilentlyContinue) {
-    $pyCmd = "py -3.13"
-} elseif (Get-Command "python" -ErrorAction SilentlyContinue) {
+if (Get-Command "python" -ErrorAction SilentlyContinue) {
     $pyCmd = "python"
+} elseif (Get-Command "py" -ErrorAction SilentlyContinue) {
+    $test = & py -3 --version 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $pyCmd = "py -3"
+    } else {
+        $pyCmd = "py"
+    }
 }
 
 if ($pyCmd) {
-    try {
-        & cmd /c "$pyCmd -m pip install -r `"$dest\requirements.txt`" --quiet"
-    } catch {}
+    Write-Host "Instalando y verificando librerias con: $pyCmd..." -ForegroundColor Cyan
+    & cmd /c "$pyCmd -m pip install -r `"$dest\requirements.txt`""
+} else {
+    Write-Host "[AVISO] Python no esta en el PATH. Ejecute install.bat si necesita configurar Python." -ForegroundColor Yellow
 }
 
 # Crear acceso directo en el escritorio
