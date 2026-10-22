@@ -17,13 +17,14 @@ if "%PYTHON_CMD%"=="" (
 )
 
 if "%PYTHON_CMD%"=="" (
-    echo [ERROR CRITICO] Python no esta detectado en el PATH de Windows.
-    echo.
-    echo Para solucionarlo:
-    echo 1. Abre el instalador de Python descargado en la VPS.
-    echo 2. Marca la casilla "Add python.exe to PATH".
-    echo 3. O ejecuta 'install.bat' para configurar el entorno.
-    echo.
+    echo [AVISO] Intentando instalar Python runtime automaticamente...
+    py install 3.13
+    py -3 --version >nul 2>&1 && set PYTHON_CMD=py -3
+)
+
+if "%PYTHON_CMD%"=="" (
+    echo [ERROR CRITICO] Python no esta instalado en el sistema.
+    echo Abre PowerShell y ejecuta: py install 3.13
     pause
     exit /b 1
 )

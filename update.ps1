@@ -14,24 +14,34 @@ Copy-Item "$ext\CME-TRADING-main\*" -Destination $dest -Recurse -Force
 Remove-Item $zip -Force -ErrorAction SilentlyContinue
 Remove-Item $ext -Recurse -Force -ErrorAction SilentlyContinue
 
-# Detectar interprete de Python disponible en el sistema (sin forzar 3.13)
+# Detectar interprete de Python disponible
 $pyCmd = $null
-if (Get-Command "python" -ErrorAction SilentlyContinue) {
-    $pyCmd = "python"
-} elseif (Get-Command "py" -ErrorAction SilentlyContinue) {
-    $test = & py -3 --version 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        $pyCmd = "py -3"
-    } else {
-        $pyCmd = "py"
-    }
+try {
+    $out = & python --version 2>&1
+    if ($out -match "Python 3\.") { $pyCmd = "python" }
+} catch {}
+
+if (-not $pyCmd) {
+    try {
+        $out = & py -3 --version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $out -match "Python 3\.") {
+            $pyCmd = "py -3"
+        }
+    } catch {}
+}
+
+# Si py existe pero falta el runtime de Python, instalarlo automaticamente
+if (-not $pyCmd -and (Get-Command "py" -ErrorAction SilentlyContinue)) {
+    Write-Host "Descargando e instalando Python oficial mediante py launcher..." -ForegroundColor Yellow
+    & py install 3.13
+    $pyCmd = "py"
 }
 
 if ($pyCmd) {
     Write-Host "Instalando y verificando librerias con: $pyCmd..." -ForegroundColor Cyan
     & cmd /c "$pyCmd -m pip install -r `"$dest\requirements.txt`""
 } else {
-    Write-Host "[AVISO] Python no esta en el PATH. Ejecute install.bat si necesita configurar Python." -ForegroundColor Yellow
+    Write-Host "[AVISO] Python no esta en el PATH. Ejecuta 'py install 3.13' en PowerShell para instalarlo." -ForegroundColor Yellow
 }
 
 # Crear acceso directo en el escritorio
