@@ -53,22 +53,29 @@ if ($pyCmd) {
     Write-Host "[ERROR] Por favor ejecuta 'py install 3.12' para instalar la version compatible." -ForegroundColor Red
 }
 
-# Crear acceso directo en el escritorio
+# Crear accesos directos en el escritorio
 try {
     $WshShell = New-Object -ComObject WScript.Shell
     $Desktop = [Environment]::GetFolderPath("Desktop")
     
-    $Shortcut = $WshShell.CreateShortcut("$Desktop\GOLDEN_SNIPER.lnk")
-    $Shortcut.TargetPath = "$dest\run_golden_sniper.bat"
-    $Shortcut.WorkingDirectory = "$dest"
-    $Shortcut.IconLocation = "$dest\run_golden_sniper.bat,0"
-    $Shortcut.Save()
+    $Shortcut1 = $WshShell.CreateShortcut("$Desktop\GOLDEN_SNIPER.lnk")
+    $Shortcut1.TargetPath = "$dest\run_golden_sniper.bat"
+    $Shortcut1.WorkingDirectory = "$dest"
+    $Shortcut1.IconLocation = "$dest\run_golden_sniper.bat,0"
+    $Shortcut1.Save()
+
+    $Shortcut2 = $WshShell.CreateShortcut("$Desktop\ALPHA_CHAMPIONS.lnk")
+    $Shortcut2.TargetPath = "$dest\run_alpha_champions.bat"
+    $Shortcut2.WorkingDirectory = "$dest"
+    $Shortcut2.IconLocation = "$dest\run_alpha_champions.bat,0"
+    $Shortcut2.Save()
 } catch {}
 
 Write-Host ""
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "  [EXITO] CME QUANT BOT ACTUALIZADO SATISFACTORIAMENTE!" -ForegroundColor Green
 Write-Host "  Ruta Suite: $dest" -ForegroundColor Green
-Write-Host "  Acceso directo 'GOLDEN_SNIPER' creado en tu Escritorio" -ForegroundColor Yellow
+Write-Host "  Acceso directo 'GOLDEN_SNIPER' (Trinity 6 Activos) en Escritorio" -ForegroundColor Yellow
+Write-Host "  Acceso directo 'ALPHA_CHAMPIONS' (6 Estrategias No-Trinity) en Escritorio" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
