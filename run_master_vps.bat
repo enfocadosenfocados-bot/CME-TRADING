@@ -8,7 +8,8 @@ echo ===========================================================================
 echo.
 echo  Seleccione la estrategia cuantitativa que desea ejecutar:
 echo.
-echo   [S] ALL SNIPER    : SUITE TOTAL CON TRINITY SNIPER (Apertura NY 13:30-15:30 + Hedges + Stat-Arb + COT) [RECOMENDADO]
+echo   [G] GOLDEN SNIPER : 6 ACTIVOS CAMPEONES EN HORAS DE ORO (Lote Minimo + 50%% Parcial TP1) [RECOMENDADO]
+echo   [S] ALL SNIPER    : SUITE TOTAL CON TRINITY SNIPER (Apertura NY 13:30-15:30 + Hedges + Stat-Arb + COT)
 echo   [T] TRINITY SNIPER: Solo Trinity Apertura NY (Sin Hedges ni Arbitrajes - 1 Trade/Dia)
 echo   [1] TRINITY [LNY] : Sesion Londres + Nueva York (07:00 a 21:00 UTC) [Magic: 71YY00]
 echo   [2] TRINITY [NY]  : Sesion Solo Nueva York      (13:00 a 21:00 UTC) [Magic: 72YY00]
@@ -22,8 +23,9 @@ echo   [9] SUITE MASTER NY    (Trinity NY  + Stat-Arb + COT + 6 Hedges)
 echo   [A] AUDITORIA EN VIVO  (Escanear todo el universo sin enviar ordenes)
 echo   [0] SALIR
 echo.
-set /p opt=Ingrese su opcion: 
+set /p opt=Ingrese su opcion [G]: 
 
+if /i "%opt%"=="G" goto optG
 if /i "%opt%"=="S" goto optS
 if /i "%opt%"=="T" goto optT
 if /i "%opt%"=="1" goto opt1
@@ -37,7 +39,18 @@ if /i "%opt%"=="8" goto opt8
 if /i "%opt%"=="9" goto opt9
 if /i "%opt%"=="A" goto optA
 if /i "%opt%"=="0" goto opt0
-goto optS
+goto optG
+
+:optG
+cls
+echo ===============================================================================
+echo   INICIANDO TRINITY GOLDEN SNIPER (6 ACTIVOS CAMPEONES EN HORAS DE ORO)
+echo   Activos: US30, USTEC, US2000, XAUUSD, GBPUSD, BTCUSD
+echo   Lotaje: Minimo Permitido Divisible (50%% Parcial @ TP1 + Runner Trailing @ TP2)
+echo ===============================================================================
+py -3.13 "%~dp0master_institutional_bot.py" --mode GOLDEN_SNIPER --daemon
+pause
+goto :eof
 
 :optS
 cls

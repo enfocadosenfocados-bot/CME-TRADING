@@ -41,6 +41,19 @@ El ecosistema está compuesto por 5 motores cuantitativos independientes y sincr
 
 ## 📊 Estrategias Integradas
 
+### 0. The Institutional Trinity - Golden Sniper Mode [RECOMENDADO]
+- **Archivo:** `strategy_trinity.py` (Modo: `GOLDEN_SNIPER` / `GOLDEN`, Magic: `77YY00`)
+- **Universo Restringido:** Opera **ÚNICAMENTE los 6 activos empíricamente ganadores** descubiertos en la auditoría forense de 410 operaciones históricas en IC Markets.
+- **Ventanas de Oro Empíricas (Horarios Específicos por Activo):**
+  - **US30:** 17:00 Broker (14:00 UTC / 08:00 CDMX) [80.0% WR] y 22:00 Broker (19:00 UTC / 13:00 CDMX) [66.7% WR].
+  - **USTEC:** 17:00 Broker (14:00 UTC / 08:00 CDMX) [72.7% WR].
+  - **US2000:** 16:00 a 18:00 Broker (13:00 a 16:00 UTC / 07:00 a 10:00 CDMX) [65.0% WR].
+  - **XAUUSD (Oro):** 05:00 Broker (02:00 UTC / 20:00 CDMX) [100% WR] y 19:00 Broker (16:00 UTC / 10:00 CDMX) [80.0% WR].
+  - **GBPUSD:** 05:00 Broker (02:00 UTC / 20:00 CDMX) [100% WR] y 16:00 Broker (13:00 UTC / 07:00 CDMX) [100% WR].
+  - **BTCUSD:** 16:00 Broker (13:00 UTC / 07:00 CDMX) [83.3% WR] y 03:00 Broker (00:00 UTC / 18:00 CDMX) [80.0% WR].
+- **Lote Mínimo Divisible:** Ejecuta estrictamente el lote mínimo que permite la salida parcial del 50% en TP1 en MT5 (`0.20` en US30/USTEC, `2.00` en US2000, `0.02` en Oro, GBP y BTC).
+- **One Bullet Policy per Window:** Máximo 1 trade de francotirador por activo en cada ventana de oro, evitando sobreoperativa.
+
 ### 1. The Institutional Trinity (Dual: LNY & Solo NY)
 - **Archivo:** `strategy_trinity.py`
 - **Fundamento Matemático:**

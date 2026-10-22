@@ -30,7 +30,7 @@ if sys.platform == 'win32':
 
 import MetaTrader5 as mt5
 
-from strategy_trinity import InstitutionalTrinityStrategy, TRINITY_ASSETS
+from strategy_trinity import InstitutionalTrinityStrategy, TRINITY_ASSETS, GOLDEN_TRINITY_ASSETS, GOLDEN_SNIPER_WINDOWS
 from strategy_pair_trading import MultiPairStatArbStrategy, MULTI_PAIRS
 from strategy_cot_squeeze import MacroCOTSqueezeStrategy, COT_CONFIG
 from strategy_institutional_hedges import AdvancedHedgeStrategies
@@ -55,9 +55,10 @@ EMPIRICAL_TARGETS = {
 }
 
 class MasterPortfolioBot:
-    def __init__(self, mode='ALL_DUAL'):
+    def __init__(self, mode='GOLDEN_SNIPER'):
         self.mode = mode.upper()
         # Instanciar todas las suites de estrategias
+        self.strat_trinity_golden = InstitutionalTrinityStrategy(session_mode='GOLDEN_SNIPER', risk_pct=TRADE_RISK_PCT)
         self.strat_trinity_sniper = InstitutionalTrinityStrategy(session_mode='NY_SNIPER', risk_pct=TRADE_RISK_PCT)
         self.strat_trinity_lny    = InstitutionalTrinityStrategy(session_mode='LNY', risk_pct=TRADE_RISK_PCT)
         self.strat_trinity_ny     = InstitutionalTrinityStrategy(session_mode='NY', risk_pct=TRADE_RISK_PCT)
@@ -128,8 +129,8 @@ class MasterPortfolioBot:
 
         for p in positions:
             magic_str = str(p.magic)
-            # Solo posiciones direccionales
-            is_directional = magic_str.startswith(('71', '72', '74', '777'))
+            # Solo posiciones direccionales (Trinity LNY: 71, NY: 72, COT: 74, NY_SNIPER: 76, GOLDEN/Legacy: 77)
+            is_directional = magic_str.startswith(('71', '72', '74', '76', '77'))
             if not is_directional or magic_str.startswith(('73', '75')):
                 continue
 
@@ -306,7 +307,16 @@ class MasterPortfolioBot:
         # 0B. Gestión de Break-Even para otras posiciones
         self.manage_portfolio_breakeven()
 
-        # 1. Trinity Versión NY SNIPER (Apertura 13:30 a 15:30 UTC | 1 Disparo Único por Activo al Día)
+        # 1. Trinity Versión GOLDEN SNIPER (6 Activos Campeones en Horas de Oro Empíricas)
+        if self.mode in ['GOLDEN_SNIPER', 'GOLDEN', 'TRINITY_GOLDEN', 'GOLD']:
+            print("\n>>> [CICLO GOLDEN SNIPER] The Institutional Trinity (6 Activos Campeones en Horas de Oro)...")
+            for sym, cfg in GOLDEN_TRINITY_ASSETS.items():
+                try:
+                    self.strat_trinity_golden.evaluate(sym, cfg, execute=execute)
+                except Exception as e:
+                    print(f"[-] Error en Trinity Golden Sniper ({sym}): {e}")
+
+        # 1-ALT. Trinity Versión NY SNIPER (Apertura 13:30 a 15:30 UTC | 1 Disparo Único por Activo al Día)
         if self.mode in ['ALL_SNIPER', 'NY_SNIPER', 'TRINITY_SNIPER', 'SNIPER']:
             print("\n>>> [CICLO SNIPER] The Institutional Trinity (Apertura NY 13:30 - 15:30 UTC | 1 Trade/Día)...")
             for sym, cfg in TRINITY_ASSETS.items():
@@ -379,9 +389,9 @@ class MasterPortfolioBot:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Master Institutional Bot - CME + IC Markets MT5")
     parser.add_argument('--mode', type=str, 
-                        choices=['ALL_SNIPER', 'NY_SNIPER', 'TRINITY_SNIPER', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
-                        default='ALL_SNIPER',
-                        help='Modo: ALL_SNIPER (Trinity Sniper en Apertura NY + Stat-Arb + COT + 6 Hedges), TRINITY_SNIPER, ALL_DUAL, ALL_LNY, ALL_NY, PAIR, COT, HEDGES')
+                        choices=['GOLDEN_SNIPER', 'GOLDEN', 'ALL_SNIPER', 'NY_SNIPER', 'TRINITY_SNIPER', 'ALL_DUAL', 'ALL_LNY', 'ALL_NY', 'ALL', 'TRINITY_LNY', 'TRINITY_NY', 'TRINITY_DUAL', 'PAIR', 'COT', 'HEDGES'], 
+                        default='GOLDEN_SNIPER',
+                        help='Modo: GOLDEN_SNIPER (6 Activos Campeones en Horas de Oro con Lote Minimo), ALL_SNIPER, TRINITY_SNIPER, ALL_DUAL, ALL_LNY, ALL_NY, PAIR, COT, HEDGES')
     parser.add_argument('--daemon', action='store_true', help='Ejecución continua 24/7 para VPS')
     parser.add_argument('--audit', action='store_true', help='Auditoría de un solo ciclo en modo simulación (sin órdenes)')
     parser.add_argument('--run-once', action='store_true', help='Ejecución de un solo ciclo con envío de órdenes real')

@@ -247,6 +247,29 @@ LOT_CAPS_1000 = {
     'BTCUSD': 0.02   # Min 0.01 -> Entra con 0.02 (50% = 0.01 en TP1, 0.01 en Trailing/TP2)
 }
 
+# ==============================================================================
+# CONFIGURACIÓN GOLDEN SNIPER (HORAS DE ORO EMPÍRICAS - 6 ACTIVOS CAMPEONES)
+# ==============================================================================
+# Ventanas horarias óptimas identificadas en la auditoría forense de 410 trades:
+# Hora Servidor IC Markets = UTC + 3
+GOLDEN_SNIPER_WINDOWS = {
+    'US30':   [(14.0, 15.0), (19.0, 20.0)],  # Broker 17:00 (14:00 UTC / 08:00 CDMX) y 22:00 (19:00 UTC / 13:00 CDMX)
+    'USTEC':  [(14.0, 15.0)],                # Broker 17:00 (14:00 UTC / 08:00 CDMX)
+    'US2000': [(13.0, 16.0)],                # Broker 16:00 a 18:00 (13:00 a 16:00 UTC / 07:00 a 10:00 CDMX)
+    'XAUUSD': [(2.0, 3.0), (16.0, 17.0)],    # Broker 05:00 (02:00 UTC / 20:00 CDMX) y 19:00 (16:00 UTC / 10:00 CDMX)
+    'GBPUSD': [(2.0, 3.0), (13.0, 14.0)],    # Broker 05:00 (02:00 UTC / 20:00 CDMX) y 16:00 (13:00 UTC / 07:00 CDMX)
+    'BTCUSD': [(13.0, 14.0), (0.0, 1.0)],    # Broker 16:00 (13:00 UTC / 07:00 CDMX) y 03:00 (00:00 UTC / 18:00 CDMX)
+}
+
+GOLDEN_TRINITY_ASSETS = {
+    'US30':   TRINITY_ASSETS['US30'],
+    'USTEC':  TRINITY_ASSETS['USTEC'],
+    'US2000': TRINITY_ASSETS['US2000'],
+    'XAUUSD': TRINITY_ASSETS['XAUUSD'],
+    'GBPUSD': TRINITY_ASSETS['GBPUSD'],
+    'BTCUSD': TRINITY_ASSETS['BTCUSD']
+}
+
 class InstitutionalTrinityStrategy:
     def __init__(self, risk_pct=RISK_PERCENT, session_mode='LNY'):
         self.risk_pct = risk_pct
@@ -297,7 +320,48 @@ class InstitutionalTrinityStrategy:
         if deals:
             for d in deals:
                 if d.symbol == symbol and d.entry == mt5.DEAL_ENTRY_IN:
-                    if str(d.magic).startswith(('71', '72', '777')):
+                    if str(d.magic).startswith(('71', '72', '76', '77')):
+                        return True
+        return False
+
+    def has_traded_in_current_window(self, symbol, magic):
+        """Verifica si este activo ya ejecutó un trade durante su ventana horaria de oro actual.
+        Permite 1 trade de francotirador por cada Ventana de Oro del activo al día.
+        """
+        now_utc = datetime.now(timezone.utc)
+        time_decimal = now_utc.hour + (now_utc.minute / 60.0)
+
+        windows = GOLDEN_SNIPER_WINDOWS.get(symbol, [])
+        current_window = None
+        for start_h, end_h in windows:
+            if start_h <= time_decimal < end_h:
+                current_window = (start_h, end_h)
+                break
+
+        if not current_window:
+            return False  # Fuera de ventana
+
+        start_h, end_h = current_window
+        window_start_dt = now_utc.replace(
+            hour=int(start_h),
+            minute=int(round((start_h % 1) * 60)),
+            second=0,
+            microsecond=0
+        )
+
+        # 1. Posición actualmente abierta con magic de Trinity
+        positions = mt5.positions_get(symbol=symbol)
+        if positions:
+            for p in positions:
+                if str(p.magic).startswith(('71', '72', '76', '77')):
+                    return True
+
+        # 2. Deals ejecutados dentro de esta ventana hoy
+        deals = mt5.history_deals_get(window_start_dt, now_utc)
+        if deals:
+            for d in deals:
+                if d.symbol == symbol and d.entry == mt5.DEAL_ENTRY_IN:
+                    if str(d.magic).startswith(('71', '72', '76', '77')):
                         return True
         return False
 
@@ -427,7 +491,15 @@ class InstitutionalTrinityStrategy:
         if symbol == 'BTCUSD':
             return True
 
-        # 3. Ventanas específicas por clase de activo
+        # 3. Ventanas específicas por clase de activo o modo
+        if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN']:
+            if symbol not in GOLDEN_SNIPER_WINDOWS:
+                return False
+            for start_h, end_h in GOLDEN_SNIPER_WINDOWS[symbol]:
+                if start_h <= time_decimal < end_h:
+                    return True
+            return False
+
         if self.session_mode == 'NY_SNIPER':
             # Ventana Única de Francotirador en Apertura NY: 13:30 a 15:30 UTC
             # (9:30 AM a 11:30 AM EST - Campana de Wall Street y Pits CME)
@@ -455,6 +527,15 @@ class InstitutionalTrinityStrategy:
         return True
 
     def calculate_lots(self, symbol, sl_points):
+        info = mt5.symbol_info(symbol)
+        if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN']:
+            if info:
+                # Lotaje mínimo par divisible entre 2 para permitir la salida parcial exacta del 50% en TP1
+                min_divisible = round(max(info.volume_min, info.volume_step) * 2.0, 2)
+                return min_divisible
+            min_map = {'US30': 0.20, 'USTEC': 0.20, 'US2000': 2.00, 'XAUUSD': 0.02, 'GBPUSD': 0.02, 'BTCUSD': 0.02}
+            return min_map.get(symbol, 0.02)
+
         acc = mt5.account_info()
         balance = acc.balance if acc else 1000.0
         # Escala proporcional de capital anclada a cuenta de 1,000 USD
@@ -495,21 +576,22 @@ class InstitutionalTrinityStrategy:
             return
 
         # Calcular Magic Number único para este activo y esta sesión
-        base_magic = 710000 if self.session_mode == 'LNY' else 720000
+        if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN']:
+            base_magic = 770000
+        elif self.session_mode == 'NY_SNIPER':
+            base_magic = 760000
+        elif self.session_mode == 'LNY':
+            base_magic = 710000
+        else:
+            base_magic = 720000
         magic = base_magic + (cfg.get('asset_id', 1) * 100)
 
-        # 1. Guardia Anti-Duplicación Familiar (Trinity LNY + Trinity NY):
-        # Si ya existe una posición abierta en este activo con cualquier magic Trinity (71xxxx o 72xxxx), bloquear.
+        # 1. Guardia Anti-Duplicación Familiar (Trinity LNY + Trinity NY + Trinity Golden):
+        # Si ya existe una posición abierta en este activo con cualquier magic Trinity, bloquear.
         positions = mt5.positions_get(symbol=symbol)
         if positions:
-            active_trinity = [p for p in positions if str(p.magic).startswith(('71', '72'))]
+            active_trinity = [p for p in positions if str(p.magic).startswith(('71', '72', '76', '77'))]
             if active_trinity:
-                return
-
-        # 1B. En modo NY_SNIPER: Regla de 1 trade por activo al día (One Bullet Policy)
-        if self.session_mode == 'NY_SNIPER':
-            if self.has_traded_today(symbol, magic):
-                print(f"  [🎯 SNIPER DIARIO] {symbol}: Trade de apertura ya ejecutado hoy. Entrada bloqueada (One Bullet Policy).")
                 return
 
         # 2. Cooldown Anti-Ametralladora (Bloqueo de 30 minutos tras pérdida)
@@ -520,6 +602,18 @@ class InstitutionalTrinityStrategy:
 
         # 3. Validación del filtro de sesión horaria
         in_session = self.is_in_session(symbol)
+
+        # 3B. En modo GOLDEN_SNIPER: Regla de 1 trade por ventana de oro (One Bullet Policy per Window)
+        if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN'] and in_session:
+            if self.has_traded_in_current_window(symbol, magic):
+                print(f"  [🏆 GOLDEN SNIPER] {symbol}: Trade ya ejecutado en la ventana actual. Entrada bloqueada (1 disparo por ventana).")
+                return
+
+        # 3C. En modo NY_SNIPER: Regla de 1 trade por activo al día (One Bullet Policy)
+        if self.session_mode == 'NY_SNIPER' and in_session:
+            if self.has_traded_today(symbol, magic):
+                print(f"  [🎯 SNIPER DIARIO] {symbol}: Trade de apertura ya ejecutado hoy. Entrada bloqueada (One Bullet Policy).")
+                return
 
         current_price = (tick.bid + tick.ask) / 2.0
         oi = self.fetch_cme_oi_walls(cfg['cme_code'], cfg['cme_pid'], cfg['cme_pf'], current_price)
@@ -540,12 +634,16 @@ class InstitutionalTrinityStrategy:
         last_c = rates[-1]
         prev_c = rates[-2]
 
-        if self.session_mode == 'NY_SNIPER':
+        if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN']:
+            win_strs = [f"{int(s):02d}:00-{int(e):02d}:00 UTC" for s, e in GOLDEN_SNIPER_WINDOWS.get(symbol, [])]
+            sess_label = f"Horas de Oro ({', '.join(win_strs)})"
+        elif self.session_mode == 'NY_SNIPER':
             sess_label = "Apertura NY Sniper (13:30-15:30 UTC)"
         elif self.session_mode == 'LNY':
             sess_label = "Londres+NY"
         else:
             sess_label = "Solo NY"
+        comment_mode = "GOLD" if self.session_mode in ['GOLDEN_SNIPER', 'GOLDEN'] else self.session_mode
         print(f"\n[TRINITY {self.session_mode}] {cfg['name']:<14} ({symbol:<7}) | Magic: {magic} | Sesion: {sess_label} ({'ABIERTA' if in_session else 'CERRADA'})")
         print(f"  Spot: {current_price:<10} | VWAP: {vwap:<10} | Spread: {spread}")
         print(f"  🛑 Call Wall: {call_wall} (+{abs(dist_call):.2f}) | 🛡️ Put Wall: {put_wall} (-{abs(dist_put):.2f})")
@@ -572,7 +670,7 @@ class InstitutionalTrinityStrategy:
                 tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(current_price - vwap), cfg['tp2_pts']))
                 tp_price = round(current_price - tp_dist, info.digits)
                 lots = self.calculate_lots(symbol, abs(current_price - sl_price))
-                comment = f"TR_{self.session_mode}_{symbol}_RejCall"[:31]
+                comment = f"TR_{comment_mode}_{symbol}_RejCall"[:31]
                 print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO CALL WALL en {call_wall} (SELL) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
@@ -585,7 +683,7 @@ class InstitutionalTrinityStrategy:
                 tp_dist = max(cfg['tp1_pts'] * 1.6, min(abs(vwap - current_price), cfg['tp2_pts']))
                 tp_price = round(current_price + tp_dist, info.digits)
                 lots = self.calculate_lots(symbol, abs(current_price - sl_price))
-                comment = f"TR_{self.session_mode}_{symbol}_RejPut"[:31]
+                comment = f"TR_{comment_mode}_{symbol}_RejPut"[:31]
                 print(f"[💥 GATILLO TRINITY {self.session_mode}] RECHAZO PUT WALL en {put_wall} (BUY) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
@@ -599,7 +697,7 @@ class InstitutionalTrinityStrategy:
                 sl_pts = max(cfg['sl_min_pts'], min(current_price - vwap, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price - sl_pts, info.digits)
                 lots = self.calculate_lots(symbol, sl_pts)
-                comment = f"TR_{self.session_mode}_{symbol}_MagCall"[:31]
+                comment = f"TR_{comment_mode}_{symbol}_MagCall"[:31]
                 print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN ALCISTA HACIA CALL WALL {call_wall} (BUY) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
                 if execute:
                     self.send_order(symbol, 'BUY', sl_price, tp_price, lots, comment, magic)
@@ -612,8 +710,11 @@ class InstitutionalTrinityStrategy:
                 sl_pts = max(cfg['sl_min_pts'], min(vwap - current_price, cfg['sl_min_pts'] * 1.5))
                 sl_price = round(current_price + sl_pts, info.digits)
                 lots = self.calculate_lots(symbol, sl_pts)
-                comment = f"TR_{self.session_mode}_{symbol}_MagPut"[:31]
+                comment = f"TR_{comment_mode}_{symbol}_MagPut"[:31]
                 print(f"[🧲 GATILLO TRINITY {self.session_mode}] IMÁN BAJISTA HACIA PUT WALL {put_wall} (SELL) | Lotes: {lots} (50% @ +{cfg['tp1_pts']} pts) | Magic: {magic}")
+                if execute:
+                    self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
+                return
                 if execute:
                     self.send_order(symbol, 'SELL', sl_price, tp_price, lots, comment, magic)
                 return
@@ -647,19 +748,20 @@ class InstitutionalTrinityStrategy:
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="The Institutional Trinity Strategy (CME + IC Markets MT5)")
-    parser.add_argument('--session', type=str, choices=['LNY', 'NY'], default='LNY',
-                        help='Modo de Sesión: LNY (Londres + NY: 07-21 UTC) o NY (Solo NY: 13-21 UTC)')
+    parser.add_argument('--session', type=str, choices=['GOLDEN_SNIPER', 'GOLDEN', 'NY_SNIPER', 'LNY', 'NY'], default='GOLDEN_SNIPER',
+                        help='Modo: GOLDEN_SNIPER (6 Activos Campeones en Horas de Oro), NY_SNIPER, LNY, NY')
     parser.add_argument('--execute', action='store_true', help='Ejecutar órdenes en vivo si hay señal')
     args = parser.parse_args()
 
     if mt5.initialize():
         strat = InstitutionalTrinityStrategy(session_mode=args.session, risk_pct=1.0)
-        sess_title = "LONDRES + NUEVA YORK (07:00 - 21:00 UTC)" if args.session == 'LNY' else "SOLO NUEVA YORK (13:00 - 21:00 UTC)"
+        target_assets = GOLDEN_TRINITY_ASSETS if args.session in ['GOLDEN_SNIPER', 'GOLDEN'] else TRINITY_ASSETS
+        sess_title = "HORAS DE ORO EMPÍRICAS (6 ACTIVOS CAMPEONES)" if args.session in ['GOLDEN_SNIPER', 'GOLDEN'] else ("LONDRES + NUEVA YORK (07:00 - 21:00 UTC)" if args.session == 'LNY' else "SOLO NUEVA YORK (13:00 - 21:00 UTC)")
         print("=" * 85)
         print(f"   AUDITORÍA EN VIVO: THE INSTITUTIONAL TRINITY [{args.session}]")
         print(f"   Filtro Horario: {sess_title}")
         print(f"   Broker: {mt5.account_info().server} | Cuenta: {mt5.account_info().login}")
         print("=" * 85)
-        for sym, cfg in TRINITY_ASSETS.items():
+        for sym, cfg in target_assets.items():
             strat.evaluate(sym, cfg, execute=args.execute)
         mt5.shutdown()
