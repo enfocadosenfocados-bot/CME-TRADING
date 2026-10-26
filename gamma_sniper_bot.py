@@ -59,6 +59,7 @@ SLIPPAGE_MAX = 15
 # Localización automática del binario Obscura Stealth
 OBSCURA_CANDIDATES = [
     os.path.join(CACHE_DIR, "obscura_bin", "obscura.exe"),
+    r"C:\Gamma_Sniper_Bot\obscura_bin\obscura.exe",
     r"C:\CME_Quant_Bot\obscura_bin\obscura.exe",
     r"C:\Users\enfoc\.gemini\antigravity\scratch\obscura_bin\obscura.exe",
 ]
@@ -72,7 +73,7 @@ def get_obscura_bin():
 OCC_REGEX = re.compile(r'^([A-Z_]+?)W?(\d{6})([CP])(\d{8})$')
 
 # ==============================================================================
-# CONFIGURACIÓN DE LOS 12 ACTIVOS INSTITUCIONALES
+# CONFIGURACIÓN DE LOS 12 ACTIVOS INSTITUCIONALES (VENTANAS DE ORO AUDITADAS)
 # ==============================================================================
 GAMMA_ASSETS = {
     'US500': {
@@ -84,7 +85,7 @@ GAMMA_ASSETS = {
         'cboe_ticker': '_SPX',
         'cboe_backup': 'SPY',
         'cme_params': (138, 2026, 12, 'EUVL'),
-        'hours_broker': list(range(15, 23)),  # 15:00 a 22:59 Broker (Sesión NY & 0DTE)
+        'hours_broker': [4, 5, 11, 14, 15, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -97,7 +98,7 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'QQQ',
         'cboe_backup': '_NDX',
         'cme_params': (148, 2026, 12, 'EUVL'),
-        'hours_broker': list(range(15, 23)),
+        'hours_broker': [3, 4, 8, 9, 13, 14, 16, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -110,7 +111,7 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'IWM',
         'cboe_backup': '_RUT',
         'cme_params': (8326, 2026, 12, 'EUVL'),
-        'hours_broker': list(range(15, 23)),
+        'hours_broker': [3, 8, 11, 13, 16, 17, 19, 21],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 1.00,
         'max_spread_atr_ratio': 0.40,
     },
@@ -123,7 +124,7 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'DIA',
         'cboe_backup': '_DJX',
         'cme_params': (319, 2026, 12, 'EUVL'),
-        'hours_broker': list(range(15, 23)),
+        'hours_broker': [6, 7, 9, 14, 17, 23],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -135,7 +136,7 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'GLD',
         'cme_params': (192, 2026, 12, 'GCVL'),
-        'hours_broker': [3, 4, 5, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20],
+        'hours_broker': [1, 7, 10, 14, 15, 16, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -147,7 +148,7 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'SLV',
         'cme_params': (193, 2026, 12, 'SIVL'),
-        'hours_broker': [10, 11, 13, 14, 15, 16, 17, 18, 19, 20],
+        'hours_broker': [4, 7, 10, 11, 12, 16],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -159,7 +160,7 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'USO',
         'cme_params': (190, 2026, 12, 'CLVL'),
-        'hours_broker': list(range(14, 22)),
+        'hours_broker': [12, 17, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -171,7 +172,7 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXE',
         'cme_params': (8116, 2026, 11, 'EUVL'),
-        'hours_broker': list(range(10, 20)),  # Londres + NY Cut (17:00 Broker)
+        'hours_broker': [4, 5, 10, 11, 14, 15, 18, 20],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -183,7 +184,7 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXB',
         'cme_params': (8098, 2026, 11, 'GBVL'),
-        'hours_broker': list(range(10, 20)),
+        'hours_broker': [1, 5, 6, 9, 13, 14, 16, 18, 21, 22],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -195,7 +196,7 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXA',
         'cme_params': (8092, 2026, 11, 'ADVL'),
-        'hours_broker': [3, 4, 5, 10, 11, 13, 14, 15, 16, 17, 18, 19],
+        'hours_broker': [1, 3, 5, 6, 13, 14, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -207,7 +208,7 @@ GAMMA_ASSETS = {
         'source_type': 'DERIBIT',
         'deribit_currency': 'BTC',
         'cboe_ticker': 'IBIT',
-        'hours_broker': [0, 1, 2, 3, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+        'hours_broker': [3, 6, 10, 17, 18],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.45,
     },
@@ -219,7 +220,7 @@ GAMMA_ASSETS = {
         'source_type': 'DERIBIT',
         'deribit_currency': 'ETH',
         'cboe_ticker': 'ETHA',
-        'hours_broker': [0, 1, 2, 3, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+        'hours_broker': [0, 1, 2, 4, 9, 13, 14, 17, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.45,
     },
