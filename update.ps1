@@ -1,4 +1,4 @@
-# One-Click CME Quant Bot Updater from GitHub
+# One-Click CME Quant Bot & Gamma Exposure Sniper Updater from GitHub
 $dest = "C:\CME_Quant_Bot"
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 $zip = "$env:TEMP\cme_repo.zip"
@@ -14,7 +14,26 @@ Copy-Item "$ext\CME-TRADING-main\*" -Destination $dest -Recurse -Force
 Remove-Item $zip -Force -ErrorAction SilentlyContinue
 Remove-Item $ext -Recurse -Force -ErrorAction SilentlyContinue
 
-# MetaTrader 5 solo es compatible con Python 3.10, 3.11, 3.12 o 3.13 (Python 3.15 experimental no tiene soporte)
+# Instalar Obscura Stealth Engine (v0.2.5) en $dest\obscura_bin si no existe
+$obsDir = "$dest\obscura_bin"
+$obsExe = "$obsDir\obscura.exe"
+if (-not (Test-Path $obsExe)) {
+    Write-Host "Descargando motor Rust Obscura Stealth (v0.2.5) para scraping institucional CME..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Force -Path $obsDir | Out-Null
+    $obsZip = "$env:TEMP\obscura_stealth.zip"
+    try {
+        Invoke-WebRequest -Uri "https://github.com/h4ckf0r0day/obscura/releases/download/v0.2.5/obscura-x86_64-windows-stealth.zip" -OutFile $obsZip
+        Expand-Archive -Path $obsZip -DestinationPath $obsDir -Force
+        Remove-Item $obsZip -Force -ErrorAction SilentlyContinue
+        Write-Host "[OK] Obscura Stealth instalado en $obsExe" -ForegroundColor Green
+    } catch {
+        Write-Host "[!] Aviso descargando Obscura: $_ (El bot usara fallback directo CBOE/HTTP)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "[OK] Motor Obscura Stealth ya instalado en $obsExe" -ForegroundColor Green
+}
+
+# MetaTrader 5 solo es compatible con Python 3.10, 3.11, 3.12 o 3.13
 Write-Host "Verificando version compatible de Python para MetaTrader 5..." -ForegroundColor Cyan
 $pyCmd = $null
 
@@ -37,16 +56,14 @@ if (-not $pyCmd) {
     } catch {}
 }
 
-# Si no hay version compatible (ej. el sistema tiene 3.15), instalar Python 3.12 automaticamente
 if (-not $pyCmd) {
-    Write-Host "Python 3.15 experimental detectado. MetaTrader 5 requiere Python 3.12." -ForegroundColor Yellow
-    Write-Host "Descargando e instalando Python 3.12 oficial (100% compatible)..." -ForegroundColor Cyan
+    Write-Host "Instalando Python 3.12 oficial (100% compatible con MetaTrader 5)..." -ForegroundColor Cyan
     & py install 3.12
     $pyCmd = "py -3.12"
 }
 
 if ($pyCmd) {
-    Write-Host "Instalando dependencias de MetaTrader 5 con $pyCmd..." -ForegroundColor Cyan
+    Write-Host "Instalando dependencias de MetaTrader 5 y Gamma Exposure con $pyCmd..." -ForegroundColor Cyan
     & cmd /c "$pyCmd -m pip install --upgrade pip --quiet"
     & cmd /c "$pyCmd -m pip install -r `"$dest\requirements.txt`""
 } else {
@@ -69,13 +86,21 @@ try {
     $Shortcut2.WorkingDirectory = "$dest"
     $Shortcut2.IconLocation = "$dest\run_alpha_champions.bat,0"
     $Shortcut2.Save()
+
+    $Shortcut3 = $WshShell.CreateShortcut("$Desktop\GAMMA_SNIPER_12.lnk")
+    $Shortcut3.TargetPath = "$dest\run_gamma_sniper.bat"
+    $Shortcut3.WorkingDirectory = "$dest"
+    $Shortcut3.IconLocation = "$dest\run_gamma_sniper.bat,0"
+    $Shortcut3.Save()
 } catch {}
 
 Write-Host ""
-Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "  [EXITO] CME QUANT BOT ACTUALIZADO SATISFACTORIAMENTE!" -ForegroundColor Green
+Write-Host "=====================================================================" -ForegroundColor Green
+Write-Host "  [EXITO] SUITE INSTITUCIONAL ACTUALIZADA EN TU VPS!" -ForegroundColor Green
 Write-Host "  Ruta Suite: $dest" -ForegroundColor Green
-Write-Host "  Acceso directo 'GOLDEN_SNIPER' (Trinity 6 Activos) en Escritorio" -ForegroundColor Yellow
-Write-Host "  Acceso directo 'ALPHA_CHAMPIONS' (6 Estrategias No-Trinity) en Escritorio" -ForegroundColor Yellow
-Write-Host "==========================================================" -ForegroundColor Green
+Write-Host "  Accesos directos creados en tu Escritorio:" -ForegroundColor Cyan
+Write-Host "   1. GAMMA_SNIPER_12  -> 12 Activos Gamma Exposure (CBOE/CME/Deribit)" -ForegroundColor Yellow
+Write-Host "   2. ALPHA_CHAMPIONS  -> 6 Estrategias Ganadoras No-Trinity" -ForegroundColor Yellow
+Write-Host "   3. GOLDEN_SNIPER    -> 6 Activos Trinity en Horas de Oro" -ForegroundColor Yellow
+Write-Host "=====================================================================" -ForegroundColor Green
 Write-Host ""

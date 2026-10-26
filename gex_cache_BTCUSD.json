@@ -1,0 +1,12 @@
+{
+  "source": "Deribit Native (BTC)",
+  "ref_spot": 80248.95,
+  "net_gex_m": 92.7,
+  "net_0dte_m": 32.45,
+  "convexity": 1.04,
+  "raw_call_wall": 95000.0,
+  "raw_put_wall": 75000.0,
+  "raw_magnet": 80000.0,
+  "raw_flip": 85000.0,
+  "is_positive_gamma": true
+}

@@ -1,0 +1,12 @@
+{
+  "source": "CBOE/OPRA (SLV)",
+  "ref_spot": 48.7274,
+  "net_gex_m": -72.74,
+  "net_0dte_m": -0.28,
+  "convexity": 1.08,
+  "raw_call_wall": 55.0,
+  "raw_put_wall": 45.0,
+  "raw_magnet": 50.0,
+  "raw_flip": 48.7274,
+  "is_positive_gamma": false
+}
