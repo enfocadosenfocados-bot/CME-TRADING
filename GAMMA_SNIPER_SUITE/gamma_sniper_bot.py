@@ -347,18 +347,20 @@ class GammaSniperBot:
             self.connected = False
 
     def get_broker_time(self, symbol=None):
-        """Obtiene la hora oficial exacta del servidor del broker directamente desde las velas M1 de MT5."""
-        ref_sym = symbol or self.symbol_map.get('EURUSD', 'EURUSD')
-        try:
-            rates = mt5.copy_rates_from_pos(ref_sym, mt5.TIMEFRAME_M1, 0, 1)
-            if rates is not None and len(rates) > 0:
-                candle_dt = datetime.fromtimestamp(rates[-1]['time'], timezone.utc)
-                now_utc = datetime.now(timezone.utc)
-                offset_hours = int(round((candle_dt - now_utc).total_seconds() / 3600.0))
-                return now_utc + timedelta(hours=offset_hours)
-        except Exception:
-            pass
-        return datetime.now(timezone.utc) + timedelta(hours=2)
+        """Obtiene la hora oficial exacta del servidor IC Markets MT5 desde el reloj vivo del servidor."""
+        best_ts = 0
+        for s in [symbol, self.symbol_map.get('EURUSD', 'EURUSD'), self.symbol_map.get('BTCUSD', 'BTCUSD')]:
+            if not s:
+                continue
+            try:
+                tick = mt5.symbol_info_tick(s)
+                if tick and tick.time > best_ts:
+                    best_ts = int(tick.time)
+            except Exception:
+                pass
+        if best_ts > 0:
+            return datetime.fromtimestamp(best_ts, timezone.utc)
+        return datetime.now(timezone.utc) + timedelta(hours=3)
 
     def get_leg_lot(self, broker_sym, fallback_lot):
         info = mt5.symbol_info(broker_sym)
