@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (GLD)",
-  "ref_spot": 368.11,
-  "net_gex_m": -176.84,
-  "net_0dte_m": 22.04,
+  "ref_spot": 367.82,
+  "net_gex_m": -176.77,
+  "net_0dte_m": 21.79,
   "convexity": 1.08,
   "raw_call_wall": 368.0,
   "raw_put_wall": 350.0,
   "raw_magnet": 365.0,
-  "raw_flip": 369.0359145629864,
+  "raw_flip": 367.07292888064967,
   "is_positive_gamma": false
 }

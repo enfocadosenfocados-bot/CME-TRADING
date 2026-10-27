@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (DIA)",
   "ref_spot": 522.97,
-  "net_gex_m": 8.19,
-  "net_0dte_m": 2.8,
+  "net_gex_m": 8.18,
+  "net_0dte_m": 2.77,
   "convexity": 1.02,
   "raw_call_wall": 540.0,
   "raw_put_wall": 510.0,
   "raw_magnet": 530.0,
-  "raw_flip": 522.7193076757686,
+  "raw_flip": 522.7109139272669,
   "is_positive_gamma": true
 }

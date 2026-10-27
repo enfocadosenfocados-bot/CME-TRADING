@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (IWM)",
-  "ref_spot": 276.82,
-  "net_gex_m": -1461.34,
-  "net_0dte_m": -481.78,
+  "ref_spot": 276.99,
+  "net_gex_m": -1475.13,
+  "net_0dte_m": -494.83,
   "convexity": 1.08,
   "raw_call_wall": 278.0,
   "raw_put_wall": 277.0,
   "raw_magnet": 277.0,
-  "raw_flip": 277.49985458783306,
+  "raw_flip": 277.4998599990546,
   "is_positive_gamma": false
 }

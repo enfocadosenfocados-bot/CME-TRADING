@@ -1,12 +1,12 @@
 {
   "source": "CME CmeWS+EUVL (Conv:1.07 IV:6.7%)",
-  "ref_spot": 1.117375,
-  "net_gex_m": 0.0,
+  "ref_spot": 1.116425,
+  "net_gex_m": -0.47,
   "net_0dte_m": -0.54,
   "convexity": 1.073,
-  "raw_call_wall": 1.1175,
-  "raw_put_wall": 1.1125,
-  "raw_magnet": 1.1125,
-  "raw_flip": 1.115,
-  "is_positive_gamma": true
+  "raw_call_wall": 1.125,
+  "raw_put_wall": 1.115,
+  "raw_magnet": 1.115,
+  "raw_flip": 1.12,
+  "is_positive_gamma": false
 }

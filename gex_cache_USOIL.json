@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (USO)",
-  "ref_spot": 165.93,
-  "net_gex_m": 31.31,
+  "ref_spot": 166.23,
+  "net_gex_m": 31.72,
   "net_0dte_m": 5.4,
   "convexity": 1.02,
   "raw_call_wall": 170.0,
   "raw_put_wall": 145.0,
   "raw_magnet": 170.0,
-  "raw_flip": 164.0777825675863,
+  "raw_flip": 164.0779323802379,
   "is_positive_gamma": true
 }

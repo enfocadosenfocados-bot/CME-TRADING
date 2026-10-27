@@ -73,7 +73,7 @@ def get_obscura_bin():
 OCC_REGEX = re.compile(r'^([A-Z_]+?)W?(\d{6})([CP])(\d{8})$')
 
 # ==============================================================================
-# CONFIGURACIÓN DE LOS 12 ACTIVOS INSTITUCIONALES (VENTANAS DE ORO AUDITADAS)
+# CONFIGURACIÓN DE LOS 12 ACTIVOS INSTITUCIONALES (WALK-FORWARD ÉLITE ENE-OCT)
 # ==============================================================================
 GAMMA_ASSETS = {
     'US500': {
@@ -85,7 +85,8 @@ GAMMA_ASSETS = {
         'cboe_ticker': '_SPX',
         'cboe_backup': 'SPY',
         'cme_params': (138, 2026, 12, 'EUVL'),
-        'hours_broker': [4, 5, 11, 14, 15, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 2 Horas)
+        'hours_broker': [17, 4],              # 17:00 y 04:00 Broker (08:00 y 19:00 CDMX)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -98,7 +99,8 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'QQQ',
         'cboe_backup': '_NDX',
         'cme_params': (148, 2026, 12, 'EUVL'),
-        'hours_broker': [3, 4, 8, 9, 13, 14, 16, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 3 Horas)
+        'hours_broker': [22, 10, 23],         # 22:00, 10:00 y 23:00 Broker (13:00, 01:00 y 14:00 CDMX)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -111,7 +113,8 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'IWM',
         'cboe_backup': '_RUT',
         'cme_params': (8326, 2026, 12, 'EUVL'),
-        'hours_broker': [3, 8, 11, 13, 16, 17, 19, 21],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 3 Horas)
+        'hours_broker': [17, 21, 20],         # 17:00, 21:00 y 20:00 Broker (08:00, 12:00 y 11:00 CDMX)
         'min_fallback_lot': 1.00,
         'max_spread_atr_ratio': 0.40,
     },
@@ -124,7 +127,8 @@ GAMMA_ASSETS = {
         'cboe_ticker': 'DIA',
         'cboe_backup': '_DJX',
         'cme_params': (319, 2026, 12, 'EUVL'),
-        'hours_broker': [6, 7, 9, 14, 17, 23],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 1,               # Walk-Forward Élite: 1 Filtro (Top 2 Horas | 51.3% WR)
+        'hours_broker': [1, 23],              # 01:00 y 23:00 Broker (16:00 y 14:00 CDMX)
         'min_fallback_lot': 0.10,
         'max_spread_atr_ratio': 0.35,
     },
@@ -136,7 +140,8 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'GLD',
         'cme_params': (192, 2026, 12, 'GCVL'),
-        'hours_broker': [1, 7, 10, 14, 15, 16, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 3,               # Walk-Forward Élite: 3 Filtros (Top 3 Horas | 51.9% WR, +$472.96)
+        'hours_broker': [16, 3, 8],           # 16:00, 03:00 y 08:00 Broker (07:00, 18:00 y 23:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -148,7 +153,8 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'SLV',
         'cme_params': (193, 2026, 12, 'SIVL'),
-        'hours_broker': [4, 7, 10, 11, 12, 16],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 2 Horas | 55.8% WR, +$366.71)
+        'hours_broker': [17, 21],             # 17:00 y 21:00 Broker (08:00 y 12:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -160,7 +166,8 @@ GAMMA_ASSETS = {
         'source_type': 'DUAL_CBOE_CME',
         'cboe_ticker': 'USO',
         'cme_params': (190, 2026, 12, 'CLVL'),
-        'hours_broker': [12, 17, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 1,               # Walk-Forward Élite: 1 Filtro (Top 2 Horas | 51.4% WR, 327 Trades)
+        'hours_broker': [22, 4],              # 22:00 y 04:00 Broker (13:00 y 19:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -172,7 +179,8 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXE',
         'cme_params': (8116, 2026, 11, 'EUVL'),
-        'hours_broker': [4, 5, 10, 11, 14, 15, 18, 20],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 3,               # Walk-Forward Élite: 3 Filtros (Top 3 Horas)
+        'hours_broker': [9, 15, 23],          # 09:00, 15:00 y 23:00 Broker (00:00, 06:00 y 14:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -184,7 +192,8 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXB',
         'cme_params': (8098, 2026, 11, 'GBVL'),
-        'hours_broker': [1, 5, 6, 9, 13, 14, 16, 18, 21, 22],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 3 Horas | 50.2% WR, 223 Trades)
+        'hours_broker': [7, 13, 17],          # 07:00, 13:00 y 17:00 Broker (22:00, 04:00 y 08:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.35,
     },
@@ -196,7 +205,8 @@ GAMMA_ASSETS = {
         'source_type': 'CME_FX',
         'cboe_ticker': 'FXA',
         'cme_params': (8092, 2026, 11, 'ADVL'),
-        'hours_broker': [1, 3, 5, 6, 13, 14, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 3 Horas | 50.0% WR, 184 Trades)
+        'hours_broker': [21, 13, 18],         # 21:00, 13:00 y 18:00 Broker (12:00, 04:00 y 09:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.40,
     },
@@ -208,7 +218,8 @@ GAMMA_ASSETS = {
         'source_type': 'DERIBIT',
         'deribit_currency': 'BTC',
         'cboe_ticker': 'IBIT',
-        'hours_broker': [3, 6, 10, 17, 18],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 3,               # Walk-Forward Élite: 3 Filtros (Top 3 Horas | 58.6% WR)
+        'hours_broker': [21, 5, 18],          # 21:00, 05:00 y 18:00 Broker (12:00, 20:00 y 09:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.45,
     },
@@ -220,7 +231,8 @@ GAMMA_ASSETS = {
         'source_type': 'DERIBIT',
         'deribit_currency': 'ETH',
         'cboe_ticker': 'ETHA',
-        'hours_broker': [0, 1, 2, 4, 9, 13, 14, 17, 18, 19],  # Ventanas de Oro IC Markets (UTC+3)
+        'min_confirmations': 2,               # Walk-Forward Élite: 2 Filtros (Top 3 Horas | 54.3% WR)
+        'hours_broker': [8, 18, 14],          # 08:00, 18:00 y 14:00 Broker (23:00, 09:00 y 05:00 CDMX)
         'min_fallback_lot': 0.01,
         'max_spread_atr_ratio': 0.45,
     },
@@ -234,6 +246,7 @@ class GammaSniperBot:
         self.gex_memory = {}
         self.last_gex_fetch = {}
         self.cooldowns = {}
+        self.traded_date_hours = set()
         self.obscura_path = get_obscura_bin()
 
     # =========================================================================
@@ -722,6 +735,8 @@ class GammaSniperBot:
             'ema9': float(cur['ema9']),
             'ema21': float(cur['ema21']),
             'ema50': float(cur['ema50']),
+            'bull_candle': bool(cur['close'] > cur['open']),
+            'bear_candle': bool(cur['close'] < cur['open']),
             'bull_stack': bool(bull_stack),
             'bear_stack': bool(bear_stack),
             'bull_magnet_align': bool(bull_magnet_align),
@@ -736,7 +751,7 @@ class GammaSniperBot:
         }
 
     # =========================================================================
-    # CONTROL DE RIESGO, COOLDOWN Y ONE-BULLET
+    # CONTROL DE RIESGO, COOLDOWN Y REGLA "1 TRADE POR HORA AL DÍA" (ONE & DONE)
     # =========================================================================
     def can_open_new_trade(self, broker_sym, magic):
         positions = mt5.positions_get(symbol=broker_sym)
@@ -751,17 +766,22 @@ class GammaSniperBot:
             return False, f"Cooldown activo ({rem} min)"
 
         broker_now = self.get_broker_time(broker_sym)
-        win_start = broker_now - timedelta(minutes=60)
-        deals = mt5.history_deals_get(win_start, broker_now)
+        dh_key = (broker_sym, str(broker_now.date()), int(broker_now.hour))
+        if dh_key in self.traded_date_hours:
+            return False, f"One & Done: ya operó en la ventana {broker_now.hour:02d}:00 hoy"
+
+        hour_start = broker_now.replace(minute=0, second=0, microsecond=0)
+        deals = mt5.history_deals_get(hour_start, broker_now)
         if deals:
             for d in deals:
                 if d.symbol == broker_sym and d.magic == magic and d.entry == mt5.DEAL_ENTRY_IN:
-                    return False, "One-Bullet: ya operó en los últimos 60 min"
+                    self.traded_date_hours.add(dh_key)
+                    return False, f"One & Done: ya operó en la ventana {broker_now.hour:02d}:00 hoy"
 
         return True, "OK"
 
     # =========================================================================
-    # EVALUACIÓN PRINCIPAL POR ACTIVO (THE MAGNET vs THE BREAK)
+    # EVALUACIÓN PRINCIPAL POR ACTIVO (WALK-FORWARD ÉLITE: 1, 2 O 3 FILTROS)
     # =========================================================================
     def evaluate_asset(self, canonical, cfg, execute=True):
         broker_sym = self.symbol_map.get(canonical, canonical)
@@ -773,11 +793,12 @@ class GammaSniperBot:
         spot = (tick.bid + tick.ask) / 2.0
         spread = tick.ask - tick.bid
         magic = cfg['magic']
+        min_conf = cfg.get('min_confirmations', 2)
         leg_lot = self.get_leg_lot(broker_sym, cfg['min_fallback_lot'])
 
         broker_dt = self.get_broker_time(broker_sym)
         in_session = broker_dt.hour in cfg['hours_broker']
-        sess_str = "ABIERTA" if in_session else "CERRADA"
+        sess_str = f"ABIERTA ({broker_dt.hour:02d}h)" if in_session else f"CERRADA (Horas Oro: {cfg['hours_broker']})"
 
         gex = self.get_live_gex_levels(canonical, cfg, spot, info.digits)
         m5 = self.compute_m5_confirmations(broker_sym)
@@ -785,12 +806,24 @@ class GammaSniperBot:
             return
 
         atr = m5['atr']
-        regime_tag = "🟢 +GEX (THE MAGNET)" if (gex['is_positive_gamma'] and spot >= gex['gamma_flip'] * 0.998) else "🔴 -GEX (THE BREAK)"
+        is_pos_regime = gex['is_positive_gamma'] and (spot >= gex['gamma_flip'] * 0.998)
+        regime_tag = "🟢 +GEX (THE MAGNET)" if is_pos_regime else "🔴 -GEX (THE BREAK)"
         stack_tag = "ALCISTA (9>21>50)" if m5['bull_stack'] else ("BAJISTA (9<21<50)" if m5['bear_stack'] else "MIXTO/RANGO")
+
+        # Contabilizar cuántas de las 3 confirmaciones se cumplen para compra y venta
+        if is_pos_regime:
+            bull_f1 = m5['bull_stack'] or m5['bull_magnet_align']
+            bear_f1 = m5['bear_stack'] or m5['bear_magnet_align']
+        else:
+            bull_f1 = m5['bull_stack']
+            bear_f1 = m5['bear_stack']
+
+        bull_confs = int(bull_f1) + int(m5['bull_flag_break']) + int(m5['vol_confirmed'])
+        bear_confs = int(bear_f1) + int(m5['bear_flag_break']) + int(m5['vol_confirmed'])
 
         print(f"\n[{cfg['name']}] {broker_sym:<10} | Spot: {spot:<10.{info.digits}f} | {regime_tag} | Sesión: {sess_str} | Lote Tramo: {leg_lot}")
         print(f"  📊 {gex['source']} -> CallWall: {gex['call_wall']} | PutWall: {gex['put_wall']} | Magnet: {gex['magnet']} | Flip: {gex['gamma_flip']}")
-        print(f"  🔍 Filtros M5 -> EMA Stack: {stack_tag} | Flag Compacta: {'SÍ' if m5['is_tight_flag'] else 'NO'} | RVOL: {m5['rvol']}x ({'OK' if m5['vol_confirmed'] else 'BAJO'})")
+        print(f"  🔍 Filtros M5 (Exige >={min_conf}/3) -> BUY Confs: {bull_confs}/3 | SELL Confs: {bear_confs}/3 | EMA: {stack_tag} | Flag: {'SÍ' if m5['is_tight_flag'] else 'NO'} | RVOL: {m5['rvol']}x")
 
         if not in_session:
             return
@@ -804,74 +837,72 @@ class GammaSniperBot:
             print(f"  [Protección] {reason}.")
             return
 
-        # Verificar las 3 confirmaciones + Setup según Régimen de Gamma
-        is_pos_regime = gex['is_positive_gamma'] and (spot >= gex['gamma_flip'] * 0.998)
         magnet = gex['magnet']
-        call_wall = gex['call_wall']
-        put_wall = gex['put_wall']
-        flip = gex['gamma_flip']
+        dh_key = (broker_sym, str(broker_dt.date()), int(broker_dt.hour))
 
         # ---------------------------------------------------------------------
         # MODO 1: "THE MAGNET" (Régimen Gamma Positiva -> Atracción al Imán)
         # ---------------------------------------------------------------------
         if is_pos_regime:
             dist_to_magnet = magnet - spot
-            # BUY hacia el Magnet superior (o rebote desde Put Wall / Gamma Flip)
-            if dist_to_magnet >= 1.2 * atr:
-                if (m5['bull_stack'] or m5['bull_magnet_align']) and m5['bull_flag_break'] and m5['vol_confirmed']:
-                    sl_dist = max(1.5 * atr, (spot - m5['flag_low']) + 0.3 * atr)
-                    sl_price = round(tick.ask - sl_dist, info.digits)
-                    tp1_price = round(tick.ask + min(dist_to_magnet * 0.55, sl_dist * 1.5), info.digits)
-                    tp2_price = round(magnet, info.digits)
-                    print(f"  [🧲 SEÑAL THE MAGNET BUY] {broker_sym} BUY hacia Imán {magnet} | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
-                    if execute:
-                        self.send_order(broker_sym, 'BUY', sl_price, tp1_price, leg_lot, f"GEX_MAG_{canonical}_C1", magic)
-                        self.send_order(broker_sym, 'BUY', sl_price, tp2_price, leg_lot, f"GEX_MAG_{canonical}_C2", magic)
-                        self.cooldowns[broker_sym] = time.time() + 2700
-                    return
+            # BUY hacia el Magnet superior (con >= min_conf confirmaciones + vela alcista)
+            if dist_to_magnet >= 1.0 * atr and m5['bull_candle'] and bull_confs >= min_conf:
+                sl_dist = 1.5 * atr
+                sl_price = round(tick.ask - sl_dist, info.digits)
+                tp1_price = round(tick.ask + (sl_dist * 1.5), info.digits)
+                tp2_price = round(tick.ask + max(abs(dist_to_magnet), sl_dist * 2.0), info.digits)
+                print(f"  [🧲 SEÑAL THE MAGNET BUY ({bull_confs}/{min_conf} Confs)] {broker_sym} BUY hacia Imán {magnet} | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
+                if execute:
+                    self.send_order(broker_sym, 'BUY', sl_price, tp1_price, leg_lot, f"GEX_MAG_{canonical}_C1", magic)
+                    self.send_order(broker_sym, 'BUY', sl_price, tp2_price, leg_lot, f"GEX_MAG_{canonical}_C2", magic)
+                    self.traded_date_hours.add(dh_key)
+                    self.cooldowns[broker_sym] = time.time() + 1800
+                return
 
-            # SELL hacia el Magnet inferior (o rechazo desde Call Wall)
-            elif dist_to_magnet <= -1.2 * atr:
-                if (m5['bear_stack'] or m5['bear_magnet_align']) and m5['bear_flag_break'] and m5['vol_confirmed']:
-                    sl_dist = max(1.5 * atr, (m5['flag_high'] - spot) + 0.3 * atr)
-                    sl_price = round(tick.bid + sl_dist, info.digits)
-                    tp1_price = round(tick.bid - min(abs(dist_to_magnet) * 0.55, sl_dist * 1.5), info.digits)
-                    tp2_price = round(magnet, info.digits)
-                    print(f"  [🧲 SEÑAL THE MAGNET SELL] {broker_sym} SELL hacia Imán {magnet} | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
-                    if execute:
-                        self.send_order(broker_sym, 'SELL', sl_price, tp1_price, leg_lot, f"GEX_MAG_{canonical}_C1", magic)
-                        self.send_order(broker_sym, 'SELL', sl_price, tp2_price, leg_lot, f"GEX_MAG_{canonical}_C2", magic)
-                        self.cooldowns[broker_sym] = time.time() + 2700
-                    return
+            # SELL hacia el Magnet inferior (con >= min_conf confirmaciones + vela bajista)
+            elif dist_to_magnet <= -1.0 * atr and m5['bear_candle'] and bear_confs >= min_conf:
+                sl_dist = 1.5 * atr
+                sl_price = round(tick.bid + sl_dist, info.digits)
+                tp1_price = round(tick.bid - (sl_dist * 1.5), info.digits)
+                tp2_price = round(tick.bid - max(abs(dist_to_magnet), sl_dist * 2.0), info.digits)
+                print(f"  [🧲 SEÑAL THE MAGNET SELL ({bear_confs}/{min_conf} Confs)] {broker_sym} SELL hacia Imán {magnet} | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
+                if execute:
+                    self.send_order(broker_sym, 'SELL', sl_price, tp1_price, leg_lot, f"GEX_MAG_{canonical}_C1", magic)
+                    self.send_order(broker_sym, 'SELL', sl_price, tp2_price, leg_lot, f"GEX_MAG_{canonical}_C2", magic)
+                    self.traded_date_hours.add(dh_key)
+                    self.cooldowns[broker_sym] = time.time() + 1800
+                return
 
         # ---------------------------------------------------------------------
         # MODO 2: "THE BREAK" (Régimen Gamma Negativa -> Aceleración de Ruptura)
         # ---------------------------------------------------------------------
         else:
             # Ruptura Bajista (Cascada de Dealers Cortos de Gamma)
-            if m5['bear_stack'] and m5['bear_flag_break'] and m5['vol_confirmed']:
-                sl_dist = max(1.5 * atr, (m5['flag_high'] - tick.bid) + 0.3 * atr)
+            if m5['bear_candle'] and bear_confs >= min_conf:
+                sl_dist = 1.5 * atr
                 sl_price = round(tick.bid + sl_dist, info.digits)
                 tp1_price = round(tick.bid - (sl_dist * 1.5), info.digits)
                 tp2_price = round(tick.bid - (sl_dist * 3.0), info.digits)
-                print(f"  [💥 SEÑAL THE BREAK SELL] {broker_sym} SELL Aceleración -GEX | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
+                print(f"  [💥 SEÑAL THE BREAK SELL ({bear_confs}/{min_conf} Confs)] {broker_sym} SELL Aceleración -GEX | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
                 if execute:
                     self.send_order(broker_sym, 'SELL', sl_price, tp1_price, leg_lot, f"GEX_BRK_{canonical}_C1", magic)
                     self.send_order(broker_sym, 'SELL', sl_price, tp2_price, leg_lot, f"GEX_BRK_{canonical}_C2", magic)
-                    self.cooldowns[broker_sym] = time.time() + 2700
+                    self.traded_date_hours.add(dh_key)
+                    self.cooldowns[broker_sym] = time.time() + 1800
                 return
 
             # Ruptura Alcista (Gamma Squeeze de Dealers Cortos de Gamma)
-            if m5['bull_stack'] and m5['bull_flag_break'] and m5['vol_confirmed']:
-                sl_dist = max(1.5 * atr, (tick.ask - m5['flag_low']) + 0.3 * atr)
+            if m5['bull_candle'] and bull_confs >= min_conf:
+                sl_dist = 1.5 * atr
                 sl_price = round(tick.ask - sl_dist, info.digits)
                 tp1_price = round(tick.ask + (sl_dist * 1.5), info.digits)
                 tp2_price = round(tick.ask + (sl_dist * 3.0), info.digits)
-                print(f"  [💥 SEÑAL THE BREAK BUY] {broker_sym} BUY Gamma Squeeze -GEX | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
+                print(f"  [💥 SEÑAL THE BREAK BUY ({bull_confs}/{min_conf} Confs)] {broker_sym} BUY Gamma Squeeze -GEX | SL: {sl_price} | TP1: {tp1_price} | TP2: {tp2_price}")
                 if execute:
                     self.send_order(broker_sym, 'BUY', sl_price, tp1_price, leg_lot, f"GEX_BRK_{canonical}_C1", magic)
                     self.send_order(broker_sym, 'BUY', sl_price, tp2_price, leg_lot, f"GEX_BRK_{canonical}_C2", magic)
-                    self.cooldowns[broker_sym] = time.time() + 2700
+                    self.traded_date_hours.add(dh_key)
+                    self.cooldowns[broker_sym] = time.time() + 1800
                 return
 
     # =========================================================================

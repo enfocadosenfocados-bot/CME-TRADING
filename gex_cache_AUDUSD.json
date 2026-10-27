@@ -1,12 +1,12 @@
 {
   "source": "CME CmeWS+ADVL (Conv:1.05 IV:7.5%)",
-  "ref_spot": 0.70165,
-  "net_gex_m": 0.0,
+  "ref_spot": 0.702005,
+  "net_gex_m": -0.01,
   "net_0dte_m": -1.12,
   "convexity": 1.0463,
   "raw_call_wall": 0.7025,
-  "raw_put_wall": 0.69,
-  "raw_magnet": 0.69,
-  "raw_flip": 0.69625,
+  "raw_put_wall": 0.695,
+  "raw_magnet": 0.695,
+  "raw_flip": 0.69875,
   "is_positive_gamma": false
 }

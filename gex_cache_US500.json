@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (_SPX)",
   "ref_spot": 7676.77,
-  "net_gex_m": -2964.86,
-  "net_0dte_m": -2747.02,
+  "net_gex_m": -3747.58,
+  "net_0dte_m": -3637.21,
   "convexity": 1.08,
   "raw_call_wall": 8100.0,
-  "raw_put_wall": 7680.0,
-  "raw_magnet": 7680.0,
-  "raw_flip": 7684.981826236116,
+  "raw_put_wall": 7675.0,
+  "raw_magnet": 7675.0,
+  "raw_flip": 7679.944799759186,
   "is_positive_gamma": false
 }

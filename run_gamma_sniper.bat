@@ -1,24 +1,25 @@
 @echo off
-title Gamma Exposure Sniper Suite - 12 Activos Completos (CBOE + CME Obscura + Deribit)
+title Gamma Exposure Sniper Suite - Walk-Forward Elite 12 Activos (CBOE + CME Obscura + Deribit)
 color 0A
 cls
-echo ====================================================================================
-echo   GAMMA EXPOSURE SNIPER SUITE - 12 ACTIVOS COMPLETOS (ITMATRIX / CBOE / CME / DERIBIT)
-echo ====================================================================================
+echo ============================================================================================
+echo   GAMMA EXPOSURE SNIPER SUITE - SELECCION ELITE WALK-FORWARD (ENE-JUL IS ^> JUL-HOY OOS)
+echo   Regla Institucional: Maximo 1 Trade por Hora de Oro al Dia (One ^& Done) + Lote Minimo
+echo ============================================================================================
 echo.
-echo   Activos y Magics Institucionales:
-echo    01. US500  [S^&P 500]      ^| Magic: 20269901 ^| CBOE _SPX / SPY 0DTE
-echo    02. USTEC  [Nasdaq 100]   ^| Magic: 20269902 ^| CBOE QQQ / _NDX 0DTE
-echo    03. US2000 [Russell 2000] ^| Magic: 20269903 ^| CBOE IWM / _RUT 0DTE
-echo    04. US30   [Dow Jones 30] ^| Magic: 20269904 ^| CBOE DIA / _DJX 0DTE
-echo    05. XAUUSD [Oro Spot]     ^| Magic: 20269905 ^| CBOE GLD + CME GC/GCVL Obscura
-echo    06. XAGUSD [Plata Spot]   ^| Magic: 20269906 ^| CBOE SLV + CME SI/SIVL Obscura
-echo    07. USOIL  [Petroleo WTI] ^| Magic: 20269907 ^| CBOE USO + CME CL/CLVL Obscura
-echo    08. EURUSD [Euro FX]      ^| Magic: 20269908 ^| CME 6E/EUVL Obscura + CBOE FXE
-echo    09. GBPUSD [Libra Cable]  ^| Magic: 20269909 ^| CME 6B/GBVL Obscura + CBOE FXB
-echo    10. AUDUSD [Aussie FX]    ^| Magic: 20269910 ^| CME 6A/ADVL Obscura + CBOE FXA
-echo    11. BTCUSD [Bitcoin]      ^| Magic: 20269911 ^| Deribit Native BTC + CBOE IBIT
-echo    12. ETHUSD [Ethereum]     ^| Magic: 20269912 ^| Deribit Native ETH + CBOE ETHA
+echo   Activos, Magics, Filtros Walk-Forward y Ventanas de Oro (Hora Broker IC / Hora CDMX):
+echo    01. XAUUSD [Oro Spot]     ^| Magic: 20269905 ^| 3 Filtros ^| Brk: 16h,03h,08h (MX: 07h,18h,23h)
+echo    02. XAGUSD [Plata Spot]   ^| Magic: 20269906 ^| 2 Filtros ^| Brk: 17h,21h     (MX: 08h,12h)
+echo    03. US30   [Dow Jones 30] ^| Magic: 20269904 ^| 1 Filtro  ^| Brk: 01h,23h     (MX: 16h,14h)
+echo    04. US2000 [Russell 2000] ^| Magic: 20269903 ^| 2 Filtros ^| Brk: 17h,21h,20h (MX: 08h,12h,11h)
+echo    05. USTEC  [Nasdaq 100]   ^| Magic: 20269902 ^| 2 Filtros ^| Brk: 22h,10h,23h (MX: 13h,01h,14h)
+echo    06. USOIL  [Petroleo WTI] ^| Magic: 20269907 ^| 1 Filtro  ^| Brk: 22h,04h     (MX: 13h,19h)
+echo    07. BTCUSD [Bitcoin]      ^| Magic: 20269911 ^| 3 Filtros ^| Brk: 21h,05h,18h (MX: 12h,20h,09h)
+echo    08. US500  [S^&P 500]      ^| Magic: 20269901 ^| 2 Filtros ^| Brk: 17h,04h     (MX: 08h,19h)
+echo    09. GBPUSD [Libra Cable]  ^| Magic: 20269909 ^| 2 Filtros ^| Brk: 07h,13h,17h (MX: 22h,04h,08h)
+echo    10. AUDUSD [Aussie FX]    ^| Magic: 20269910 ^| 2 Filtros ^| Brk: 21h,13h,18h (MX: 12h,04h,09h)
+echo    11. EURUSD [Euro FX]      ^| Magic: 20269908 ^| 3 Filtros ^| Brk: 09h,15h,23h (MX: 00h,06h,14h)
+echo    12. ETHUSD [Ethereum]     ^| Magic: 20269912 ^| 2 Filtros ^| Brk: 08h,18h,14h (MX: 23h,09h,05h)
 echo.
 
 set PYTHON_CMD=

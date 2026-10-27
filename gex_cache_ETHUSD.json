@@ -1,8 +1,8 @@
 {
   "source": "Deribit Native (ETH)",
-  "ref_spot": 2315.17,
-  "net_gex_m": 4.93,
-  "net_0dte_m": 1.72,
+  "ref_spot": 2312.03,
+  "net_gex_m": 5.19,
+  "net_0dte_m": 1.82,
   "convexity": 1.04,
   "raw_call_wall": 2500.0,
   "raw_put_wall": 2300.0,

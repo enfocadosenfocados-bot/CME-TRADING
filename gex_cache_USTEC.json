@@ -1,12 +1,12 @@
 {
   "source": "CBOE/OPRA (QQQ)",
-  "ref_spot": 713.41,
-  "net_gex_m": -1858.15,
-  "net_0dte_m": -1021.55,
+  "ref_spot": 714.44,
+  "net_gex_m": -1882.21,
+  "net_0dte_m": -1044.55,
   "convexity": 1.08,
   "raw_call_wall": 714.0,
   "raw_put_wall": 712.0,
   "raw_magnet": 712.0,
-  "raw_flip": 713.5195253400275,
+  "raw_flip": 713.5198612448461,
   "is_positive_gamma": false
 }
